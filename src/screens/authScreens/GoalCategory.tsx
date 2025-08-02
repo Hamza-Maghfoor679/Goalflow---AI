@@ -1,49 +1,55 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CategoryCard from '../../components/ui/CategoryCard';
 import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { CategoryCard } from '../../components/ui/CategoryCard';
+
 const categories = [
-  {
-    title: 'Career',
-    image: require('../../assets/images/career.webp'),
-  },
-  {
-    title: 'Health',
-    image: require('../../assets/images/health.webp'),
-  },
-  {
-    title: 'Fitness',
-    image: require('../../assets/images/fitness.jpg'),
-  },
-  {
-    title: 'Finance',
-    image: require('../../assets/images/finance.webp'),
-  },
-  {
-    title: 'Spirituality',
-    image: require('../../assets/images/spirit.webp'),
-  },
-  {
-    title: 'Relationship',
-    image: require('../../assets/images/relationship.jpg'),
-  },
-  {
-    title: 'Creativity',
-    image: require('../../assets/images/creativity.jpg'),
-  },
-  {
-    title: 'Personality',
-    image: require('../../assets/images/personality.jpg'),
-  },
+  { title: 'Career', image: require('../../assets/images/career.webp') },
+  { title: 'Health', image: require('../../assets/images/health.webp') },
+  { title: 'Fitness', image: require('../../assets/images/fitness.jpg') },
+  { title: 'Finance', image: require('../../assets/images/finance.webp') },
+  { title: 'Spirituality', image: require('../../assets/images/spirit.webp') },
+  { title: 'Relationship', image: require('../../assets/images/relationship.jpg') },
+  { title: 'Creativity', image: require('../../assets/images/creativity.jpg') },
+  { title: 'Personality', image: require('../../assets/images/personality.jpg') },
 ];
 
 const GoalCategory = () => {
   const navigation = useTypedNavigation();
 
-  const handleSelect = (title: string) => {
-    navigation.navigate('Onboarding', { category: title });
+  // Ensure anonymous user exists
+  const ensureAnonymousUser = async () => {
+    if (!auth().currentUser) {
+      await auth().signInAnonymously();
+    }
+    return auth().currentUser;
+  };
+
+  // Save selected category to Firestore
+  const saveSelectedCategory = async (category: string) => {
+    const user = await ensureAnonymousUser();
+    console.log('User>>>>>>>>', user)
+    if (!user) throw new Error('User not available');
+    await firestore()
+      .collection('users')
+      .doc(user.uid)
+      .set(
+        {
+          selectedCategories: [category.toLowerCase()],
+          onboardingStep: 'categories',
+          updatedAt: firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
   };
 
   return (
@@ -55,14 +61,25 @@ const GoalCategory = () => {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.grid}>
-          {categories.map((cat, index) => (
-            <CategoryCard
-              key={index}
-              title={cat.title}
-              image={cat.image}
-              onPress={() => handleSelect(cat.title.toLowerCase())}
-            />
-          ))}
+          {categories.map((cat, index) => {
+            const lower = cat.title.toLowerCase();
+            return (
+              <CategoryCard
+                key={index}
+                title={cat.title}
+                image={cat.image}
+                onPress={async () => {
+                  try {
+                    await saveSelectedCategory(lower);
+                    navigation.navigate('Onboarding', { category: lower });
+                  } catch (e) {
+                    console.error('Error selecting category:', e);
+                    // TODO: Show user-friendly message (e.g., toast/snackbar)
+                  }
+                }}
+              />
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -76,8 +93,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 12,
     backgroundColor: '#393E46',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   title: {
     fontSize: 20,
@@ -88,7 +103,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   grid: {
     flexDirection: 'row',

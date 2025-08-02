@@ -20,7 +20,6 @@ const Onboarding = () => {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Onboarding'>>();
   const { category } = route.params || {};
-  console.log('category', category);
 
   const normalizedCategory = category?.toLowerCase() as GoalCategory;
   const selectedQuestions = habitQuestionsByCategory[normalizedCategory] || [];

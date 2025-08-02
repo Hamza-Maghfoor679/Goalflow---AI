@@ -10,14 +10,19 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/HomeStyle';
 import { goals, tasks } from '../../constants/utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store/store';
 
 const HomeScreen = () => {
+  const { userData } = useSelector((state: RootState) => state.auth);
+  const userName = userData?.user?.givenName;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.greetingsSection}>
-        <Text style={styles.greeting}>Welcome back, Hamza 👋</Text>
+        <Text style={styles.greeting}>Welcome back, {userName}👋</Text>
         <Text style={styles.subGreeting}>
-          Here’s what your AI planned for today
+          Here's what your AI planned for today
         </Text>
       </View>
 
@@ -26,7 +31,7 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Today’s Focus</Text>
+          <Text style={styles.sectionTitle}>🎯 Today's Focus</Text>
           {tasks.map(task => (
             <View
               key={task.id}
@@ -47,7 +52,7 @@ const HomeScreen = () => {
           <View style={styles.progressCard}>
             <Text style={styles.progressText}>3-Day Streak 🔥</Text>
             <Text style={styles.progressSubText}>
-              Keep going, you’re doing great!
+              Keep going, you're doing great!
             </Text>
           </View>
         </View>
@@ -93,6 +98,8 @@ const HomeScreen = () => {
         <Ionicons name="sparkles-outline" size={24} color="white" />
         <Text style={styles.floatingButtonText}>Plan My Day with AI</Text>
       </TouchableOpacity>
+
+     
     </SafeAreaView>
   );
 };

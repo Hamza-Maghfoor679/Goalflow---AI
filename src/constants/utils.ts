@@ -8,6 +8,40 @@ export const tasks = [
   { id: '2', title: 'Meditate for 10 minutes', done: true },
 ];
 
+// export const categories = [
+//   {
+//     title: 'Career',
+//     image: require('../assets/images/career.webp'),
+//   },
+//   {
+//     title: 'Health',
+//     image: require('../assets/images/health.webp'),
+//   },
+//   {
+//     title: 'Fitness',
+//     image: require('../../assets/images/fitness.jpg'),
+//   },
+//   {
+//     title: 'Finance',
+//     image: require('../../assets/images/finance.webp'),
+//   },
+//   {
+//     title: 'Spirituality',
+//     image: require('../../assets/images/spirit.webp'),
+//   },
+//   {
+//     title: 'Relationship',
+//     image: require('../../assets/images/relationship.jpg'),
+//   },
+//   {
+//     title: 'Creativity',
+//     image: require('../../assets/images/creativity.jpg'),
+//   },
+//   {
+//     title: 'Personality',
+//     image: require('../../assets/images/personality.jpg'),
+//   },
+// ];
 
 export type Task = {
   id: string;

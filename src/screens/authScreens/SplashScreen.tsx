@@ -13,9 +13,9 @@ export default function SplashScreen() {
           style={styles.image}
         />
       </View>
-
       <View style={styles.footer}>
         <Button title="Get Started" onPress={() => navigation.navigate('GoalCategory')} />
+        <Button title="Already Have an account" onPress={() => navigation.navigate('Login')} />
       </View>
     </View>
   );

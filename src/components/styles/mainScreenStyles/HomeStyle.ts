@@ -7,15 +7,15 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  greetingsSection: {
-    backgroundColor: colors.primary,
-    paddingTop: 70,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-    zIndex: 10,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-  },
+greetingsSection: {
+  backgroundColor: colors.primary,
+  paddingTop: 70,
+  paddingBottom: 20,
+  paddingHorizontal: 16,
+  zIndex: 1, // Changed from 10 to 1
+  borderBottomLeftRadius: 12,
+  borderBottomRightRadius: 12,
+},
   scrollContent: {
     paddingTop: 15,
     paddingHorizontal: 12,

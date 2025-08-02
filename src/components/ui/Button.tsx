@@ -1,26 +1,38 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Loader from './Loader'; 
 
-const Button = ({
-  title = 'Press Me',
-  onPress,
-  color = '#113F67',
-}: {
+interface ButtonProps {
   title?: string;
   onPress?: () => void;
   color?: string;
+  loading?: boolean;
+  loaderColor?: string;
+  loaderSize?: 'small' | 'large' | number; 
+}
+
+const Button: React.FC<ButtonProps> = ({
+  title = 'Press Me',
+  onPress,
+  color = '#113F67',
+  loading = false,
 }) => {
   return (
     <View style={styles.container}>
       <Pressable
         style={({ pressed }) => [
           styles.button,
-          { backgroundColor: color },
+          { backgroundColor: loading ? '#fff' : color },
           pressed && styles.buttonPressed,
         ]}
         onPress={onPress}
+        disabled={loading} 
       >
-        <Text style={styles.text}>{title}</Text>
+        {loading ? (
+          <Loader />
+        ) : (
+          <Text style={styles.text}>{title}</Text>
+        )}
       </Pressable>
     </View>
   );
@@ -32,7 +44,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginVertical: 5,
-    width: '100%'
+    width: '100%',
   },
   button: {
     paddingVertical: 14,
@@ -43,8 +55,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
-    width: '100%', 
+    width: '100%',
     alignItems: 'center',
+    justifyContent: 'center', 
   },
   buttonPressed: {
     opacity: 0.8,
