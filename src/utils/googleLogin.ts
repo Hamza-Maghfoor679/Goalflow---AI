@@ -2,23 +2,39 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
-
+import Toast from 'react-native-toast-message';
+import {
+  setIdToken,
+  setLoginSuccess,
+  setUserData,
+} from '../redux/slices/tokenSlice';
 /**
  * Sign in with Google and merge onboarding data into Firestore
  */
-export async function signInWithGoogleAndSaveOnboarding(onboardingPayload: any) {
+export async function signInWithGoogleAndSaveOnboarding(
+  onboardingPayload: any,
+  dispatch?: any,
+) {
   const currentUser = auth().currentUser;
-
+  console.log('Current User:', currentUser);
   try {
     // 1. Sign in with Google
     const userInfo = await GoogleSignin.signIn();
+    console.log('userInfo', userInfo);
     const { idToken } = await GoogleSignin.getTokens();
+    dispatch(setIdToken(idToken));
 
     if (!idToken) throw new Error('Google ID Token not received');
 
     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
     let finalUser: FirebaseAuthTypes.User | null = null;
-
+    dispatch(setLoginSuccess(true));
+    dispatch(setUserData(userInfo?.data));
+    console.log('Showing success toast');
+Toast.show({
+  type: 'success',
+  text1: 'Welcome back! You are logged in with Google',
+});
     // 2. If user is anonymous, link to keep UID
     if (currentUser && currentUser.isAnonymous) {
       const linked = await currentUser.linkWithCredential(googleCredential);
@@ -33,6 +49,16 @@ export async function signInWithGoogleAndSaveOnboarding(onboardingPayload: any) 
     // 3. Save onboarding data to Firestore
     const userRef = firestore().collection('users').doc(finalUser.uid);
 
+    const docSnapshot = await userRef.get();
+
+    if (docSnapshot.exists()) {
+      Toast.show({
+        type: 'success',
+        text1: 'User already exists, skipped onboarding save',
+      });
+      return;
+    }
+
     await userRef.set(
       {
         ...onboardingPayload,
@@ -43,8 +69,10 @@ export async function signInWithGoogleAndSaveOnboarding(onboardingPayload: any) 
         },
         linkedWithGoogle: true,
       },
-      { merge: true }
+      { merge: true },
     );
+    const savedData = await userRef.get();
+    console.log('📦 Saved Firestore Data:', savedData?.data());
   } catch (err: any) {
     if (err.code === 'auth/credential-already-in-use') {
       const { idToken } = await GoogleSignin.getTokens();
@@ -66,22 +94,24 @@ export async function signInWithGoogleAndSaveOnboarding(onboardingPayload: any) 
             .collection('users')
             .doc(googleUser.uid)
             .set(anonData.data() || {}, { merge: true });
-
         }
       }
 
-      await firestore().collection('users').doc(googleUser.uid).set(
-        {
-          ...onboardingPayload,
-          google: {
-            displayName: googleUser.displayName,
-            email: googleUser.email,
-            photoURL: googleUser.photoURL,
+      await firestore()
+        .collection('users')
+        .doc(googleUser.uid)
+        .set(
+          {
+            ...onboardingPayload,
+            google: {
+              displayName: googleUser.displayName,
+              email: googleUser.email,
+              photoURL: googleUser.photoURL,
+            },
+            linkedWithGoogle: true,
           },
-          linkedWithGoogle: true,
-        },
-        { merge: true }
-      );
+          { merge: true },
+        );
     } else {
       console.error('Google sign-in error:', err);
       throw err;

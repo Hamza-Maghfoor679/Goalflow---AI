@@ -13,8 +13,10 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import Button from '../../components/ui/Button';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { RootStackParamList } from '../../types';
+import { OnboardingProp } from '../../types/types';
 
 const { width } = Dimensions.get('window');
+
 
 const Onboarding = () => {
   const navigation = useTypedNavigation();
@@ -80,13 +82,16 @@ const Onboarding = () => {
     trauma: string;
     preferences: string;
   }) => {
-    console.log('Answers:', answers);
-    console.log('Personality:', personality);
-    console.log('Trauma:', trauma);
-    console.log('Preferences:', preferences);
+    const onboardingPayload: OnboardingProp = {
+      personality: personality,
+      trauma: trauma,
+      answers: answers, 
+      preferences: preferences, 
+      category: category
+    }
 
     setModalVisible(false);
-    navigation.navigate('Login');
+    navigation.navigate('Login', {onboardingPayload});
   };
 
   if (!category || selectedQuestions.length === 0) {

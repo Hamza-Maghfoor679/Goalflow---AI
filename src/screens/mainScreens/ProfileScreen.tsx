@@ -19,7 +19,7 @@ const ProfileScreen: React.FC = () => {
   try {
     await GoogleSignin.signOut();
     dispatch(clearIdToken())
-    navigation.navigate('Login')
+    navigation.replace('Splash')
   } catch (error) {
     console.error('Error signing out: ', error);
   }

@@ -16,6 +16,7 @@ import { RootState } from '../../redux/store/store';
 const HomeScreen = () => {
   const { userData } = useSelector((state: RootState) => state.auth);
   const userName = userData?.user?.givenName;
+  console.log('User Datassssssssssssss:', userData);
 
   return (
     <SafeAreaView style={styles.container}>

@@ -5,53 +5,17 @@ import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { loginStyles } from '../../components/styles/loginStyles';
 import Toast from 'react-native-toast-message';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-} from '@react-native-firebase/auth';
 import { useDispatch } from 'react-redux';
-import { setIdToken, setLoginSuccess, setUserData } from '../../redux/slices/tokenSlice';
 
-export default function LoginScreen({personality, trauma, preferences}: any) {
+import { useRoute } from '@react-navigation/native';
+import { signInWithGoogleAndSaveOnboarding } from '../../utils/googleLogin';
 
-  console.log('CHECK THESE VALUES', personality, trauma, preferences);
-  
-
+export default function LoginScreen() {
+  const onboardingPayload = useRoute().params;
 
   const navigation = useTypedNavigation();
   const dispatch = useDispatch();
-
-  const handleGoogleLogin = async () => {
-    try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const signInResult = await GoogleSignin.signIn();
-      console.log('sigingResult', signInResult);
-      dispatch(setLoginSuccess(true));
-      const userData = signInResult?.data
-      dispatch(setUserData(userData))
-      
-      let idToken = signInResult.data?.idToken ?? null
-      
-      dispatch(setIdToken(idToken));
-
-      if (!idToken) {
-        throw new Error('No ID token found');
-      }
-
-      const googleCredential = GoogleAuthProvider.credential(
-        signInResult?.data?.idToken,
-      );
-
-      const result = await signInWithCredential(getAuth(), googleCredential);
-      
-      return result;
-    } catch (error) {
-      console.error('Google login error:', error);
-    }
-  };
-
+  
   const handleAppleLogin = () => {
     console.log('Login with Apple');
     Toast.show({
@@ -75,7 +39,10 @@ export default function LoginScreen({personality, trauma, preferences}: any) {
       <Text style={loginStyles.subtitle}>Login to continue</Text>
 
       <View style={loginStyles.buttonContainer}>
-        <Pressable style={loginStyles.button} onPress={handleGoogleLogin}>
+        <Pressable
+          style={loginStyles.button}
+          onPress={() => signInWithGoogleAndSaveOnboarding(onboardingPayload, dispatch)}
+        >
           <Ionicons
             name="logo-google"
             size={20}
