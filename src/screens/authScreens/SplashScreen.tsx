@@ -8,14 +8,22 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-      <Image
+        <Image
           source={require('../../assets/images/Logo.png')}
           style={styles.image}
         />
       </View>
       <View style={styles.footer}>
-        <Button title="Get Started" onPress={() => navigation.navigate('GoalCategory')} />
-        <Button title="Already Have an account" onPress={() => navigation.navigate('Login')} />
+        <Button
+          title="Get Started"
+          onPress={() => navigation.navigate('GoalCategory')}
+        />
+        <Button
+          title="Already Have an account"
+          onPress={() =>
+            navigation.navigate('Login', { onboardingPayload: null })
+          }
+        />
       </View>
     </View>
   );
@@ -45,6 +53,6 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginBottom: 20,
-    borderRadius: 20
+    borderRadius: 20,
   },
 });

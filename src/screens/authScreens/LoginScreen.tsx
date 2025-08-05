@@ -41,7 +41,7 @@ export default function LoginScreen() {
       <View style={loginStyles.buttonContainer}>
         <Pressable
           style={loginStyles.button}
-          onPress={() => signInWithGoogleAndSaveOnboarding(onboardingPayload, dispatch)}
+          onPress={() => signInWithGoogleAndSaveOnboarding(onboardingPayload, dispatch, navigation)}
         >
           <Ionicons
             name="logo-google"

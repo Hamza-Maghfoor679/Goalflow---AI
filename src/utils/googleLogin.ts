@@ -3,118 +3,88 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
+
 import {
   setIdToken,
   setLoginSuccess,
   setUserData,
 } from '../redux/slices/tokenSlice';
-/**
- * Sign in with Google and merge onboarding data into Firestore
- */
+
 export async function signInWithGoogleAndSaveOnboarding(
   onboardingPayload: any,
   dispatch?: any,
+  navigation?: any,
 ) {
-  const currentUser = auth().currentUser;
-  console.log('Current User:', currentUser);
   try {
-    // 1. Sign in with Google
     const userInfo = await GoogleSignin.signIn();
-    console.log('userInfo', userInfo);
-    const { idToken } = await GoogleSignin.getTokens();
-    dispatch(setIdToken(idToken));
+    const googleEmail = userInfo?.data?.user?.email;
 
-    if (!idToken) throw new Error('Google ID Token not received');
-
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-    let finalUser: FirebaseAuthTypes.User | null = null;
-    dispatch(setLoginSuccess(true));
-    dispatch(setUserData(userInfo?.data));
-    console.log('Showing success toast');
-Toast.show({
-  type: 'success',
-  text1: 'Welcome back! You are logged in with Google',
-});
-    // 2. If user is anonymous, link to keep UID
-    if (currentUser && currentUser.isAnonymous) {
-      const linked = await currentUser.linkWithCredential(googleCredential);
-      finalUser = linked.user;
-    } else {
-      const signInResult = await auth().signInWithCredential(googleCredential);
-      finalUser = signInResult.user;
-    }
-
-    if (!finalUser) throw new Error('User object missing after Google sign-in');
-
-    // 3. Save onboarding data to Firestore
-    const userRef = firestore().collection('users').doc(finalUser.uid);
-
-    const docSnapshot = await userRef.get();
-
-    if (docSnapshot.exists()) {
-      Toast.show({
-        type: 'success',
-        text1: 'User already exists, skipped onboarding save',
-      });
+    if (!googleEmail) {
+      Toast.show({ type: 'error', text1: 'Google email not found' });
       return;
     }
 
-    await userRef.set(
-      {
-        ...onboardingPayload,
-        google: {
-          displayName: finalUser.displayName,
-          email: finalUser.email,
-          photoURL: finalUser.photoURL,
-        },
-        linkedWithGoogle: true,
-      },
-      { merge: true },
-    );
-    const savedData = await userRef.get();
-    console.log('📦 Saved Firestore Data:', savedData?.data());
-  } catch (err: any) {
-    if (err.code === 'auth/credential-already-in-use') {
-      const { idToken } = await GoogleSignin.getTokens();
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+    const querySnapshot = await firestore()
+      .collection('users')
+      .where('google.email', '==', googleEmail)
+      .limit(1)
+      .get();
 
-      const signInResult = await auth().signInWithCredential(googleCredential);
-      const googleUser = signInResult.user;
+    const userExists = !querySnapshot.empty;
 
-      if (!googleUser) throw new Error('Google user not found');
-
-      if (currentUser?.isAnonymous) {
-        const anonData = await firestore()
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
-
-        if (anonData.exists()) {
-          await firestore()
-            .collection('users')
-            .doc(googleUser.uid)
-            .set(anonData.data() || {}, { merge: true });
-        }
-      }
-
-      await firestore()
-        .collection('users')
-        .doc(googleUser.uid)
-        .set(
-          {
-            ...onboardingPayload,
-            google: {
-              displayName: googleUser.displayName,
-              email: googleUser.email,
-              photoURL: googleUser.photoURL,
-            },
-            linkedWithGoogle: true,
-          },
-          { merge: true },
-        );
-    } else {
-      console.error('Google sign-in error:', err);
-      throw err;
+    if (!userExists && !onboardingPayload) {
+      Toast.show({
+        type: 'error',
+        text1: 'Please complete onboarding to continue',
+      });
+      navigation?.navigate('Onboarding');
+      return;
     }
+
+    const { idToken } = await GoogleSignin.getTokens();
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+    const signInResult = await auth().signInWithCredential(googleCredential);
+    const finalUser: FirebaseAuthTypes.User | null = signInResult.user;
+
+    if (!finalUser) throw new Error('User object missing after sign-in');
+
+    dispatch?.(setIdToken(idToken));
+    dispatch?.(setLoginSuccess(true));
+    dispatch?.(setUserData(userInfo.data));
+
+    const userRef = firestore().collection('users').doc(finalUser.uid);
+
+    if (!userExists && onboardingPayload) {
+      await userRef.set(
+        {
+          ...onboardingPayload,
+          google: {
+            displayName: finalUser.displayName,
+            email: finalUser.email,
+            photoURL: finalUser.photoURL,
+          },
+          linkedWithGoogle: true,
+        },
+        { merge: true },
+      );
+
+      Toast.show({
+        type: 'success',
+        text1: 'Account created successfully!',
+      });
+    } else {
+      Toast.show({
+        type: 'success',
+        text1: 'Welcome back!',
+      });
+    }
+  } catch (err: any) {
+    console.error('Google sign-in error:', err);
+    Toast.show({
+      type: 'error',
+      text1: 'Google Sign-In Failed',
+      text2: err?.message || 'Unexpected error',
+    });
   }
 }

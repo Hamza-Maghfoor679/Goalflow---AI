@@ -16,12 +16,11 @@ import { RootState } from '../../redux/store/store';
 const HomeScreen = () => {
   const { userData } = useSelector((state: RootState) => state.auth);
   const userName = userData?.user?.givenName;
-  console.log('User Datassssssssssssss:', userData);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.greetingsSection}>
-        <Text style={styles.greeting}>Welcome back, {userName}👋</Text>
+        <Text style={styles.greeting}>Welcome, {userName}👋</Text>
         <Text style={styles.subGreeting}>
           Here's what your AI planned for today
         </Text>
