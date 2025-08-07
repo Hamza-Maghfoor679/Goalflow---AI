@@ -8,11 +8,14 @@ import { Provider } from 'react-redux';
 import RootNavigator from './src/navigation/rootNavigator/RootNavigator';
 import { PersistGate } from 'redux-persist/integration/react';
 import Loader from './src/components/ui/Loader';
+import { LogBox } from 'react-native';
 
 const App = () => {
 
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
+
+  LogBox.ignoreAllLogs(); // Ignore all log notifications
 
   function onAuthStateChanged(user: any) {
     setUser(user);

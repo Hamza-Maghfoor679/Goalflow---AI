@@ -17,11 +17,11 @@ import { OnboardingProp } from '../../types/types';
 
 const { width } = Dimensions.get('window');
 
-
 const Onboarding = () => {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Onboarding'>>();
-  const { category } = route.params || {};
+  const { category, input, age } = route.params || {};
+  console.log('Onboarding category:', category, 'data:', input, "age:", age);
 
   const normalizedCategory = category?.toLowerCase() as GoalCategory;
   const selectedQuestions = habitQuestionsByCategory[normalizedCategory] || [];
@@ -87,7 +87,9 @@ const Onboarding = () => {
       trauma: trauma,
       answers: answers, 
       preferences: preferences, 
-      category: category
+      category: category, 
+      // input: input,
+      // age: agev
     }
 
     setModalVisible(false);

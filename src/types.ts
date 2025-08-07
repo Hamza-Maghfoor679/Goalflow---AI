@@ -5,7 +5,7 @@ import { OnboardingProp } from "./types/types";
 export type RootStackParamList = {
   Splash: undefined;
   GoalCategory: undefined;
-  Onboarding: { category: string };
+  Onboarding: { category: string, input?: string, age?: string };
   Login: {onboardingPayload: OnboardingProp | null}; 
   MainStack: undefined
 };

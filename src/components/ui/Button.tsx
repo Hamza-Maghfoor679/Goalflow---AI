@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Loader from './Loader'; 
+import Loader from './Loader'; // Assuming you have a Loader component
 
 interface ButtonProps {
   title?: string;
@@ -8,30 +8,49 @@ interface ButtonProps {
   color?: string;
   loading?: boolean;
   loaderColor?: string;
-  loaderSize?: 'small' | 'large' | number; 
+  loaderSize?: 'small' | 'large' | number;
+  disabled?: boolean;
 }
+
+const DISABLED_COLOR = '#b4b4b4ff'; // Light grey for disabled state
 
 const Button: React.FC<ButtonProps> = ({
   title = 'Press Me',
   onPress,
   color = '#113F67',
   loading = false,
+  disabled = false,
 }) => {
+  const isDisabled = loading || disabled;
+
   return (
     <View style={styles.container}>
       <Pressable
         style={({ pressed }) => [
           styles.button,
-          { backgroundColor: loading ? '#fff' : color },
-          pressed && styles.buttonPressed,
+          {
+            backgroundColor: isDisabled
+              ? DISABLED_COLOR
+              : loading
+              ? '#fff'
+              : color,
+          },
+          pressed && !isDisabled && styles.buttonPressed,
         ]}
         onPress={onPress}
-        disabled={loading} 
+        disabled={isDisabled}
       >
         {loading ? (
           <Loader />
         ) : (
-          <Text style={styles.text}>{title}</Text>
+          <Text
+            style={[
+              styles.text,
+              isDisabled && styles.textDisabled,
+            ]}
+          >
+            {title}
+          </Text>
         )}
       </Pressable>
     </View>
@@ -57,7 +76,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'center', 
+    justifyContent: 'center',
   },
   buttonPressed: {
     opacity: 0.8,
@@ -67,5 +86,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Inter',
+  },
+  textDisabled: {
+    color: '#000',
   },
 });
