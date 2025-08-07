@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 import auth from '@react-native-firebase/auth';
@@ -12,12 +12,9 @@ import CustomModal from '../../components/ui/Modal';
 const GoalCategory = () => {
   const navigation = useTypedNavigation();
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  console.log('selectedCategory:', selectedCategory);
-  
+  const [GoalDefinition, setGoalDefinition] = useState<string>('');
   const [age, setAge] = useState<string>('');
-  const [input, setInput] = useState<string>('');
-  const isInputValid = age.trim() !== '' ;
+  const [goalCategory, setGoalCategory] = useState<string>('');
 
   const ensureAnonymousUser = async () => {
     try {
@@ -50,7 +47,6 @@ const GoalCategory = () => {
           },
           { merge: true },
         );
-      console.log('Category saved successfully in background');
     } catch (error) {
       console.error('Error saving category in background:', error);
     }
@@ -58,10 +54,19 @@ const GoalCategory = () => {
 
   const handleCategorySelect = (categoryTitle: string) => {
     const lower = categoryTitle.toLowerCase();
-    setSelectedCategory(lower);
+    // navigation.navigate('Onboarding', { category: lower });
+    setGoalCategory(lower);
+
     setIsVisible(true);
-    console.log('Selected category:', lower);
     saveSelectedCategoryInBackground(lower);
+  };
+  const handleSubmit = (data: { data: string }) => {
+    console.log('Submitted data:', data, age, goalCategory );
+    setIsVisible(false);
+    setGoalDefinition(data.data);
+    navigation.navigate('Onboarding', { category: goalCategory, input: data.data, age: age });
+
+    // Handle the submitted data as needed
   };
 
   return (
@@ -86,25 +91,15 @@ const GoalCategory = () => {
         </View>
       </ScrollView>
       <CustomModal
-        // disabled={isInputValid ? false : true}
+        value={GoalDefinition}
+        title="In one sentence, what do you want to achieve?"
         isVisible={isVisible}
         onClose={() => setIsVisible(false)}
-        onSubmit={data => {
-          console.log('Submitted data:', data);
-          setIsVisible(false);
-          setInput(data.data);
-          if (selectedCategory) {
-            navigation.navigate('Onboarding', {
-              category: selectedCategory,
-              input: data.data,
-              age: age,
-            });
-          }
-        }}
-        title="In one sentence, what do you want to achieve?"
+        onSubmit={handleSubmit}
+        setValue={setGoalDefinition}
       >
         <TextInput
-          placeholder="How Old are you? (In Years)"
+          placeholder={'Enter your Age'}
           placeholderTextColor="#999"
           style={[modalStyles.modalInput, modalStyles.multilineInput]}
           returnKeyType="done"
@@ -112,7 +107,7 @@ const GoalCategory = () => {
           value={age}
           onChangeText={setAge}
           textAlignVertical="top"
-          keyboardType="numeric"
+          keyboardType='numeric'
         />
       </CustomModal>
     </SafeAreaView>
@@ -120,6 +115,7 @@ const GoalCategory = () => {
 };
 
 export default GoalCategory;
+
 
 const modalStyles = StyleSheet.create({
   modalInput: {
@@ -134,4 +130,4 @@ const modalStyles = StyleSheet.create({
   multilineInput: {
     height: 100,
   },
-});
+})

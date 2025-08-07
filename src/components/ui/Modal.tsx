@@ -40,6 +40,7 @@ const CustomModal: React.FC<UserInfoModalProps> = ({
 
 // This is incorrect if you're using external `value` and `setValue`
 const handleSubmit = () => {
+  console.log('Submitting data:', value);
   if (value?.trim()) {
     onSubmit({ data: value.trim() });
     onClose();
