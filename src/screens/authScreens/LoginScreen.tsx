@@ -12,9 +12,7 @@ import { signInWithGoogleAndSaveOnboarding } from '../../utils/googleLogin';
 
 export default function LoginScreen() {
   const onboardingPayload = useRoute().params;
-  console.log('Onboarding Payload:', onboardingPayload);
   
-
   const navigation = useTypedNavigation();
   const dispatch = useDispatch();
   

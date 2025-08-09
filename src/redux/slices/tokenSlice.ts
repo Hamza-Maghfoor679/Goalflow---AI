@@ -20,12 +20,14 @@ export interface AuthState {
   idToken: string | null | undefined;
   userData: UserDataState | null;
   loginSuccess: boolean;
+  Uid: string | null ;
 }
 
 const initialState: AuthState = {
   idToken: null,
   userData: null,
   loginSuccess: false,
+  Uid: null
 };
 
 const tokenSlice = createSlice({
@@ -47,6 +49,9 @@ const tokenSlice = createSlice({
     clearLoginSuccess: (state) => {
       state.loginSuccess = false;
     },
+    setUid: (state, action) => {
+      state.Uid = action.payload;
+    }
   },
 });
 
@@ -55,7 +60,8 @@ export const {
   clearIdToken, 
   setUserData, 
   setLoginSuccess, 
-  clearLoginSuccess 
+  clearLoginSuccess,
+  setUid
 } = tokenSlice.actions;
 
 export default tokenSlice.reducer;

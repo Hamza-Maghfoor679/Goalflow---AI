@@ -8,10 +8,16 @@ import {
 } from 'react-native';
 import { initialTasks } from '../../constants/utils';
 import { styles } from '../../components/styles/mainScreenStyles/GoalsStyle';
-
+import { useSelector } from 'react-redux';
+import { useGenerateTasksQuery } from '../../api/HomeApi';
+import { RootState } from '../../redux/store/store';
+import LoadingModal from '../../components/ui/LoadingModal';
 
 const GoalsScreen: React.FC = () => {
   const [tasks, setTasks] = useState(initialTasks);
+  const { Uid } = useSelector((state: RootState) => state.auth);
+  const { data, error, isLoading } = useGenerateTasksQuery(Uid!);
+  const { tipOfTheDay } = data || {};
 
   const toggleTask = (id: string) => {
     setTasks(prev =>
@@ -53,10 +59,13 @@ const GoalsScreen: React.FC = () => {
 
       <Text style={styles.tipTitle}>💡 AI Tip of the Day</Text>
       <Text style={styles.tipText}>
-        You tend to lose focus midweek. Try moving high-effort tasks to Monday
-        and Thursday!
+        {isLoading ? 'Loading tip...' : tipOfTheDay || 'No tip available.'}
       </Text>
-      </View>
+      <LoadingModal
+        visible={isLoading}
+        loadingText={isLoading ? 'Analyzing Data...' : 'Retrieving Data...'}
+      />
+    </View>
   );
 };
 export default GoalsScreen;

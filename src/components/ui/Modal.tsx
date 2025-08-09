@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import Button from './Button';
+import { styles } from '../styles/ModalStyles';
 
 interface UserInfoModalProps {
   isVisible: boolean;
@@ -30,7 +31,7 @@ const CustomModal: React.FC<UserInfoModalProps> = ({
   isVisible,
   onClose,
   onSubmit,
-  placeholder = 'Enter your data',
+  placeholder,
   title,
   children,
   disabled = false,
@@ -38,9 +39,7 @@ const CustomModal: React.FC<UserInfoModalProps> = ({
   setValue
 }) => {
 
-// This is incorrect if you're using external `value` and `setValue`
 const handleSubmit = () => {
-  console.log('Submitting data:', value);
   if (value?.trim()) {
     onSubmit({ data: value.trim() });
     onClose();
@@ -99,55 +98,4 @@ const handleSubmit = () => {
 
 export default CustomModal;
 
-const styles = StyleSheet.create({
-  flexOne: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // dimmed background
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    justifyContent: 'center',
-    margin: 0,
-    paddingHorizontal: 4,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingVertical: 25,
-    paddingHorizontal: 15,
-    maxHeight: Dimensions.get('window').height * 0.8,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#222',
-  },
-  modalInput: {
-    backgroundColor: '#f2f2f2',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 15,
-    fontSize: 14,
-    color: '#000',
-  },
-  multilineInput: {
-    height: 100,
-  },
-  buttonWrapper: {
-    marginTop: 10,
-  },
-});
+

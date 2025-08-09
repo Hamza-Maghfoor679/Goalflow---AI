@@ -7,7 +7,6 @@ import MainStack from '../mainStack/MainStack';
 
 const RootNavigator = () => {
   const idToken = useSelector((state: RootState) => state.auth.idToken);
-  console.log('Check redux', idToken);
   
   const isLoading = false;
 

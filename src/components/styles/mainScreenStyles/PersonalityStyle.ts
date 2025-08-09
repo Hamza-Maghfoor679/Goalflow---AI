@@ -67,17 +67,21 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 10,
+    marginTop: 20,
     marginBottom: 6,
-    color: colors.primary
+    color: colors.primary,
+    
   },
   paragraph: {
     fontSize: 15,
     color: '#374151',
     lineHeight: 22,
+    minHeight: 50,
   },
   listContainer: {
     marginTop: 8,
+    backgroundColor: '#384e65ff',
+
   },
   listItem: {
     fontSize: 15,

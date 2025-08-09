@@ -20,8 +20,7 @@ const { width } = Dimensions.get('window');
 const Onboarding = () => {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Onboarding'>>();
-  const { category, input, age } = route.params || {};
-  console.log('Onboarding category:', category, 'data:', input, "age:", age);
+  const { category, input, age, timeFrame } = route.params || {};
 
   const normalizedCategory = category?.toLowerCase() as GoalCategory;
   const selectedQuestions = habitQuestionsByCategory[normalizedCategory] || [];
@@ -82,16 +81,20 @@ const Onboarding = () => {
     trauma: string;
     preferences: string;
   }) => {
+    const structuredAnswers = selectedQuestions.map((q, index) => ({
+    question: q.question,
+    answer: answers[index] || '',
+  }));
     const onboardingPayload: OnboardingProp = {
       personality: personality,
       trauma: trauma,
-      answers: answers, 
+      answers: structuredAnswers, 
       preferences: preferences, 
       category: category, 
-      // input: input,
-      // age: agev
+      input: input,
+      age: age,
+      timeFrame: timeFrame,
     }
-
     setModalVisible(false);
     navigation.navigate('Login', {onboardingPayload});
   };

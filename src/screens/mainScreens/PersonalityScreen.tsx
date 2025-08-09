@@ -4,9 +4,14 @@ import {
   Text,
   ScrollView,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import Button from '../../components/ui/Button';
 import { styles } from '../../components/styles/mainScreenStyles/PersonalityStyle';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store/store';
+import { useGeneratePersonalityQuery } from '../../api/personalityApi';
+import LoadingModal from '../../components/ui/LoadingModal';
 
 interface PersonalityData {
   type: string;
@@ -36,16 +41,27 @@ const personality: PersonalityData = {
   ],
 };
 
+type FamousPerson = {
+  name: string;
+};
+
 const PersonalityScreen: React.FC = () => {
+  const { Uid } = useSelector((state: RootState) => state.auth);
+
+  const { data: personalityData, isLoading: isPersonalityLoading } =
+    useGeneratePersonalityQuery(Uid!);
+  const { impactOnGoals, description, personalityType } = personalityData || {};
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Fixed Header Section */}
         <View style={styles.fixedHeader}>
           <Text style={styles.heading}>🧠 Your Personality Profile</Text>
-          
+
           <View style={styles.card}>
-            <Text style={styles.personalityType}>{personality.type}</Text>
+            <Text style={styles.personalityType}>
+              {isPersonalityLoading ? <ActivityIndicator /> : personalityType}
+            </Text>
             <Text style={styles.personalityTitle}>{personality.title}</Text>
           </View>
 
@@ -58,45 +74,55 @@ const PersonalityScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Scrollable Content */}
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.sectionTitle}>About You</Text>
-          <Text style={styles.paragraph}>{personality.description}</Text>
+          <Text style={styles.sectionTitle}>🧠 About You</Text>
+          <Text style={styles.paragraph}>
+            {isPersonalityLoading ? <ActivityIndicator /> : description}
+          </Text>
 
           <Text style={styles.sectionTitle}>
             🧩 How This Impacts Your Goals
           </Text>
-          <Text style={styles.paragraph}>{personality.impact}</Text>
+          <Text style={styles.paragraph}>
+            {isPersonalityLoading ? <ActivityIndicator /> : impactOnGoals}
+          </Text>
 
-          {personality.notablePeople && (
-            <>
-              <Text style={styles.sectionTitle}>🔍 Famous People Like You</Text>
-              <View style={styles.listContainer}>
-                {personality.notablePeople.map((name, index) => (
+          <>
+            <Text style={styles.sectionTitle}>🔍 Famous People Like You</Text>
+            {isPersonalityLoading ? (
+              <ActivityIndicator />
+            ) : (
+              personalityData?.famousPeople?.map(
+                (person: FamousPerson, index: number) => (
                   <Text key={index} style={styles.listItem}>
-                    • {name}
+                    • {person.name}
                   </Text>
-                ))}
-              </View>
-            </>
-          )}
+                ),
+              )
+            )}
+          </>
 
-          {/* Spacer to avoid overlap with fixed button */}
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Fixed Bottom Button */}
         <View style={styles.bottomButtonContainer}>
           <Button title="Retake Personality Test" />
         </View>
       </View>
+      <LoadingModal
+        visible={isPersonalityLoading}
+        loadingText={
+          isPersonalityLoading
+            ? 'Analyzing Personality...'
+            : 'Retrieving Data...'
+        }
+      />
     </SafeAreaView>
   );
 };
 
 export default PersonalityScreen;
-

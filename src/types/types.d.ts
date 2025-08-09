@@ -1,7 +1,13 @@
 export interface OnboardingProp {
   personality: string;
+   input: string | undefined;
+  age: string | undefined;
   trauma: string;
   preferences: string;
-  answers: (string | null)[];  // <-- this should be an array
+   answers: {
+    question: string;
+    answer: string;
+  }[];  // <-- this should be an array
   category: string;
+ timeFrame?: string; // Optional field for time frame
 }

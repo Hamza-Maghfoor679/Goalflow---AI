@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
   tipText: {
     fontSize: 12,
     color: '#444',
-    textAlign: 'center'
+    textAlign: 'center',
+    marginTop: 4
   },
 });
 

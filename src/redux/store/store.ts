@@ -1,5 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import tokenReducer from '../slices/tokenSlice';
+import { api } from '../../api/api'; // This is your RTK Query base API
+
 import {
   persistStore,
   persistReducer,
@@ -23,13 +25,14 @@ const persistedAuthReducer = persistReducer(persistConfig, tokenReducer);
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
+    [api.reducerPath]: api.reducer, 
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(api.middleware), // ✅ RTK Query middleware
 });
 
 export const persistor = persistStore(store);

@@ -6,7 +6,10 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { CategoryCard } from '../../components/ui/CategoryCard';
 import { categories } from '../../constants/utils';
-import { styles } from '../../components/styles/goalCategoryStyles';
+import {
+  modalStyles,
+  styles,
+} from '../../components/styles/goalCategoryStyles';
 import CustomModal from '../../components/ui/Modal';
 
 const GoalCategory = () => {
@@ -15,6 +18,12 @@ const GoalCategory = () => {
   const [GoalDefinition, setGoalDefinition] = useState<string>('');
   const [age, setAge] = useState<string>('');
   const [goalCategory, setGoalCategory] = useState<string>('');
+  const [timeFrame, setTimeFrame] = useState<string>('');
+
+  const isDisabled =
+    GoalDefinition.trim() === '' ||
+    age.trim() === '' ||
+    timeFrame.trim() === '';
 
   const ensureAnonymousUser = async () => {
     try {
@@ -54,19 +63,20 @@ const GoalCategory = () => {
 
   const handleCategorySelect = (categoryTitle: string) => {
     const lower = categoryTitle.toLowerCase();
-    // navigation.navigate('Onboarding', { category: lower });
     setGoalCategory(lower);
-
     setIsVisible(true);
     saveSelectedCategoryInBackground(lower);
   };
+
   const handleSubmit = (data: { data: string }) => {
-    console.log('Submitted data:', data, age, goalCategory );
     setIsVisible(false);
     setGoalDefinition(data.data);
-    navigation.navigate('Onboarding', { category: goalCategory, input: data.data, age: age });
-
-    // Handle the submitted data as needed
+    navigation.navigate('Onboarding', {
+      category: goalCategory,
+      input: data.data,
+      age: age,
+      timeFrame: 'I want to achieve this goal in/by ' + timeFrame,
+    });
   };
 
   return (
@@ -91,12 +101,14 @@ const GoalCategory = () => {
         </View>
       </ScrollView>
       <CustomModal
+        disabled={isDisabled}
         value={GoalDefinition}
-        title="In one sentence, what do you want to achieve?"
+        title={`In one sentence, what do you want to achieve specifically in ${goalCategory}`}
         isVisible={isVisible}
         onClose={() => setIsVisible(false)}
         onSubmit={handleSubmit}
         setValue={setGoalDefinition}
+        placeholder="Write Specific Goal Here"
       >
         <TextInput
           placeholder={'Enter your Age'}
@@ -107,7 +119,19 @@ const GoalCategory = () => {
           value={age}
           onChangeText={setAge}
           textAlignVertical="top"
-          keyboardType='numeric'
+          keyboardType="numeric"
+        />
+        <TextInput
+          placeholder={
+            'In how much time do you want to achieve this? Write in weeks, months, years. Specify!'
+          }
+          placeholderTextColor="#999"
+          style={[modalStyles.modalInput, modalStyles.multilineInput]}
+          returnKeyType="done"
+          multiline
+          value={timeFrame}
+          onChangeText={setTimeFrame}
+          textAlignVertical="top"
         />
       </CustomModal>
     </SafeAreaView>
@@ -115,19 +139,3 @@ const GoalCategory = () => {
 };
 
 export default GoalCategory;
-
-
-const modalStyles = StyleSheet.create({
-  modalInput: {
-    backgroundColor: '#f2f2f2',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 15,
-    fontSize: 14,
-    color: '#000',
-  },
-  multilineInput: {
-    height: 100,
-  },
-})

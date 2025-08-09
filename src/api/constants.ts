@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://us-central1-goalflow-backend.cloudfunctions.net/helloWorld';

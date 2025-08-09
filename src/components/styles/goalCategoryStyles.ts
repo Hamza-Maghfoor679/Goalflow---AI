@@ -23,3 +23,20 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
   },
 });
+
+
+
+export const modalStyles = StyleSheet.create({
+  modalInput: {
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginBottom: 15,
+    fontSize: 14,
+    color: '#000',
+  },
+  multilineInput: {
+    height: 100,
+  },
+})

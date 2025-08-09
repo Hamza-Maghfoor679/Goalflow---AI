@@ -7,6 +7,7 @@ import Toast from 'react-native-toast-message';
 import {
   setIdToken,
   setLoginSuccess,
+  setUid,
   setUserData,
 } from '../redux/slices/tokenSlice';
 
@@ -45,13 +46,20 @@ export async function signInWithGoogleAndSaveOnboarding(
     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
     const signInResult = await auth().signInWithCredential(googleCredential);
+
     const finalUser: FirebaseAuthTypes.User | null = signInResult.user;
+
+    const user = auth().currentUser;
+    const uid = user?.uid;
+
+    console.log('Firebase UID:', uid);
 
     if (!finalUser) throw new Error('User object missing after sign-in');
 
     dispatch?.(setIdToken(idToken));
     dispatch?.(setLoginSuccess(true));
     dispatch?.(setUserData(userInfo.data));
+    dispatch?.(setUid(uid))
 
     const userRef = firestore().collection('users').doc(finalUser.uid);
 
