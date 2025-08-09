@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "34196151101",
+    "project_id": "goalflow-39917",
+    "storage_bucket": "goalflow-39917.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:34196151101:android:232de0529c2c2194504354",
+        "android_client_info": {
+          "package_name": "com.goalflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "34196151101-s037kra1u7smst5q2bdacsigln52ci6d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.goalflow",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "34196151101-e6h8hnn253mk87l64ctcgc5bvdkdq6eo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASKO8KOhV9O00dCAqZpgfzerZ0oTphPnY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "34196151101-e6h8hnn253mk87l64ctcgc5bvdkdq6eo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

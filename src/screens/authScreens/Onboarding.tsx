@@ -13,14 +13,14 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import Button from '../../components/ui/Button';
 import Entypo from 'react-native-vector-icons/Entypo';
 import { RootStackParamList } from '../../types';
+import { OnboardingProp } from '../../types/types';
 
 const { width } = Dimensions.get('window');
 
 const Onboarding = () => {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Onboarding'>>();
-  const { category } = route.params || {};
-  console.log('category', category);
+  const { category, input, age, timeFrame } = route.params || {};
 
   const normalizedCategory = category?.toLowerCase() as GoalCategory;
   const selectedQuestions = habitQuestionsByCategory[normalizedCategory] || [];
@@ -81,13 +81,22 @@ const Onboarding = () => {
     trauma: string;
     preferences: string;
   }) => {
-    console.log('Answers:', answers);
-    console.log('Personality:', personality);
-    console.log('Trauma:', trauma);
-    console.log('Preferences:', preferences);
-
+    const structuredAnswers = selectedQuestions.map((q, index) => ({
+    question: q.question,
+    answer: answers[index] || '',
+  }));
+    const onboardingPayload: OnboardingProp = {
+      personality: personality,
+      trauma: trauma,
+      answers: structuredAnswers, 
+      preferences: preferences, 
+      category: category, 
+      input: input,
+      age: age,
+      timeFrame: timeFrame,
+    }
     setModalVisible(false);
-    navigation.navigate('Login');
+    navigation.navigate('Login', {onboardingPayload});
   };
 
   if (!category || selectedQuestions.length === 0) {

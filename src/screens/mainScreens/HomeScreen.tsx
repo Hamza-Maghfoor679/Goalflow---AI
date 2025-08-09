@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,44 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/HomeStyle';
 import { goals, tasks } from '../../constants/utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store/store';
+import { useGenerateTasksQuery } from '../../api/HomeApi';
+import { useGeneratePersonalityQuery } from '../../api/personalityApi';
+import LoadingModal from '../../components/ui/LoadingModal';
+import LaunchModal from '../../components/ui/LaunchModal';
 
 const HomeScreen = () => {
+  const { userData, Uid } = useSelector((state: RootState) => state.auth);
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  const userName = userData?.user?.givenName;
+
+  const { data, error, isLoading } = useGenerateTasksQuery(Uid!);
+  const { data: personalityData, isLoading: isPersonalityLoading } =
+    useGeneratePersonalityQuery(Uid!);
+    
+  const aiInsight = personalityData?.aiInsight || 'No AI insight available.';
+
+  const todaysFocus =
+    data?.todaysFocus ||
+    'Avoid distractions and focus on your top priority tasks today.';
+  console.log('Generated Tasks:', data?.todaysFocus);
+  if (error) {
+    console.log('RTK Query error:', error);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.greetingsSection}>
-        <Text style={styles.greeting}>Welcome back, Hamza 👋</Text>
+        <Text style={styles.greeting}>Welcome, {userName}👋</Text>
         <Text style={styles.subGreeting}>
-          Here’s what your AI planned for today
+          Here's what your AI planned for today
         </Text>
       </View>
 
@@ -26,28 +52,20 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Today’s Focus</Text>
-          {tasks.map(task => (
-            <View
-              key={task.id}
-              style={[
-                styles.taskCard,
-                task.done ? styles.taskCardDone : styles.taskCardPending,
-              ]}
-            >
-              <Text style={[styles.taskText, task.done && styles.taskTextDone]}>
-                {task.title}
-              </Text>
-            </View>
-          ))}
+          <Text style={styles.sectionTitle}>🎯 Today's Focus</Text>
+          <View style={[styles.taskCard, styles.taskCardPending]}>
+            <Text style={[styles.taskText]}>
+              {isLoading ? <ActivityIndicator /> : todaysFocus}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📊 Your Progress</Text>
           <View style={styles.progressCard}>
-            <Text style={styles.progressText}>3-Day Streak 🔥</Text>
+            <Text style={styles.progressText}>Keep Going🔥</Text>
             <Text style={styles.progressSubText}>
-              Keep going, you’re doing great!
+              Your progress will be displayed here soon.
             </Text>
           </View>
         </View>
@@ -56,8 +74,7 @@ const HomeScreen = () => {
           <Text style={styles.sectionTitle}>🧠 AI Insight</Text>
           <View style={styles.insightCard}>
             <Text style={styles.insightText}>
-              People like you tend to succeed when they start with small wins.
-              Focus on your sleep routine today!
+              {isPersonalityLoading ? <ActivityIndicator /> : aiInsight}
             </Text>
           </View>
         </View>
@@ -88,11 +105,24 @@ const HomeScreen = () => {
 
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => console.log('Plan my day pressed')}
+        onPress={() => setIsVisible(true)}
       >
         <Ionicons name="sparkles-outline" size={24} color="white" />
         <Text style={styles.floatingButtonText}>Plan My Day with AI</Text>
       </TouchableOpacity>
+      <LoadingModal
+        visible={isPersonalityLoading}
+        loadingText={
+          isPersonalityLoading
+            ? 'Analyzing Personality...'
+            : isLoading
+            ? 'Generating Task...'
+            : 'Retrieving Data...'
+        }
+      />
+      <LaunchModal visible={isVisible} LaunchText='This feature is in beta mode and will be available soon...' onClose={()=>{
+        setIsVisible(false);
+      }} />
     </SafeAreaView>
   );
 };

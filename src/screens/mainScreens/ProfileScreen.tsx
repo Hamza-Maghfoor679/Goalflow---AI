@@ -1,9 +1,29 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/ProfileStyle';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { useTypedNavigation } from '../../hooks/useTypedNavigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearIdToken } from '../../redux/slices/tokenSlice';
+import { RootState } from '../../redux/store/store';
 
 const ProfileScreen: React.FC = () => {
+  const navigation = useTypedNavigation()
+  const dispatch = useDispatch()
+
+  const userData = useSelector((state: RootState) => state.auth.userData)  
+  const userName = userData?.user?.givenName
+
+  const signOut = async () => {
+  try {
+    await GoogleSignin.signOut();
+    dispatch(clearIdToken())
+  } catch (error) {
+    console.error('Error signing out: ', error);
+  }
+};
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
@@ -11,7 +31,7 @@ const ProfileScreen: React.FC = () => {
           <Ionicons name="person" size={40} color="#fff" />
         </View>
         <View>
-          <Text style={styles.name}>Hi, Hamza</Text>
+          <Text style={styles.name}>Hi, {userName}</Text>
           <TouchableOpacity>
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>
@@ -55,7 +75,7 @@ const ProfileScreen: React.FC = () => {
         <TouchableOpacity style={styles.settingItem}>
           <Text>Contact Support</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={[styles.settingItem]} onPress={signOut}>
           <Text>Logout</Text>
         </TouchableOpacity>
       </View>

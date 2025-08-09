@@ -12,9 +12,10 @@ type CategoryCardProps = {
   title: string;
   image?: any;
   onPress?: () => void;
+  isSelected?: boolean
 };
 
-const CategoryCard = ({ title, image, onPress }: CategoryCardProps) => {
+export const CategoryCard = ({ title, image, onPress, isSelected }: CategoryCardProps) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -37,13 +38,19 @@ const CategoryCard = ({ title, image, onPress }: CategoryCardProps) => {
       onPressOut={handlePressOut}
       onPress={onPress}
       style={styles.pressable}
+      accessibilityRole="button"
+      accessible
     >
-      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[
+          styles.card,
+          isSelected && styles.selectedCard,
+          { transform: [{ scale }] },
+        ]}
+      >
         {image ? (
           <ImageBackground source={image} style={styles.image} resizeMode="cover">
-            <View
-              style={styles.overlay}
-            >
+            <View style={styles.overlay}>
               <Text style={styles.title}>{title}</Text>
             </View>
           </ImageBackground>
@@ -56,8 +63,6 @@ const CategoryCard = ({ title, image, onPress }: CategoryCardProps) => {
     </Pressable>
   );
 };
-
-export default CategoryCard;
 
 const styles = StyleSheet.create({
   pressable: {
@@ -75,6 +80,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  selectedCard: {
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
   image: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -83,7 +92,7 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   placeholder: {
     flex: 1,
@@ -98,3 +107,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+

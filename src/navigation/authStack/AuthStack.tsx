@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../../screens/authScreens/SplashScreen';
 import GoalCategory from '../../screens/authScreens/GoalCategory';
@@ -19,6 +19,7 @@ export type AuthStackParamList = {
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 const AuthStack = () => {
+  
   return (
     <Stack.Navigator initialRouteName="Splash" screenOptions={{
       headerShown: false

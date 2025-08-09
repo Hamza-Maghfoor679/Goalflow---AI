@@ -1,37 +1,36 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { loginStyles } from '../../components/styles/loginStyles';
 import Toast from 'react-native-toast-message';
+import { useDispatch } from 'react-redux';
+
+import { useRoute } from '@react-navigation/native';
+import { signInWithGoogleAndSaveOnboarding } from '../../utils/googleLogin';
 
 export default function LoginScreen() {
+  const onboardingPayload = useRoute().params;
+  
   const navigation = useTypedNavigation();
-
-  const handleGoogleLogin = async () => {
-    Toast.show({
-        type: 'info',
-        text1: 'Google auth using firebase will be added'
-    })
-    navigation.navigate('MainStack')
-  };
-
+  const dispatch = useDispatch();
+  
   const handleAppleLogin = () => {
     console.log('Login with Apple');
-         Toast.show({
-        type: 'info',
-        text1: 'Apple auth using firebase will be added'
-    })
-    navigation.navigate('MainStack')
+    Toast.show({
+      type: 'info',
+      text1: 'Apple auth using firebase will be added',
+    });
+    navigation.navigate('MainStack');
   };
 
   const handleFacebookLogin = () => {
-     Toast.show({
-        type: 'info',
-        text1: 'Facebook auth using firebase will be added'
-    })
-    navigation.navigate('MainStack')
+    Toast.show({
+      type: 'info',
+      text1: 'Facebook auth using firebase will be added',
+    });
+    navigation.navigate('MainStack');
   };
 
   return (
@@ -40,7 +39,10 @@ export default function LoginScreen() {
       <Text style={loginStyles.subtitle}>Login to continue</Text>
 
       <View style={loginStyles.buttonContainer}>
-        <Pressable style={loginStyles.button} onPress={handleGoogleLogin}>
+        <Pressable
+          style={loginStyles.button}
+          onPress={() => signInWithGoogleAndSaveOnboarding(onboardingPayload, dispatch, navigation)}
+        >
           <Ionicons
             name="logo-google"
             size={20}
