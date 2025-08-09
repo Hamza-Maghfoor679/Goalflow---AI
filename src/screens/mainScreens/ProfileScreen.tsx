@@ -7,22 +7,35 @@ import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearIdToken } from '../../redux/slices/tokenSlice';
 import { RootState } from '../../redux/store/store';
+import { useGeneratePersonalityQuery } from '../../api/personalityApi';
+import LoadingModal from '../../components/ui/LoadingModal';
+import LaunchModal from '../../components/ui/LaunchModal';
+import { useGetUserQuery } from '../../api/userApi';
 
 const ProfileScreen: React.FC = () => {
-  const navigation = useTypedNavigation()
-  const dispatch = useDispatch()
+  const navigation = useTypedNavigation();
+  const dispatch = useDispatch();
+  const [isVisible, setIsVisible] = React.useState(false);
+  const { Uid } = useSelector((state: RootState) => state.auth);
 
-  const userData = useSelector((state: RootState) => state.auth.userData)  
-  const userName = userData?.user?.givenName
+  const { data: personalityData, isLoading: isPersonalityLoading } =
+    useGeneratePersonalityQuery(Uid!);
+  const { personalityType, wellnessScore } = personalityData || {};
+  const { data: user } = useGetUserQuery(Uid!);
+  console.log('userData', user?.firestoreData?.onboardingPayload);
+  const userData = useSelector((state: RootState) => state.auth.userData);
+  const userName = userData?.user?.givenName;
+  const usersData = user?.firestoreData?.onboardingPayload || {};
+  const { trauma, preferences } = usersData;
 
   const signOut = async () => {
-  try {
-    await GoogleSignin.signOut();
-    dispatch(clearIdToken())
-  } catch (error) {
-    console.error('Error signing out: ', error);
-  }
-};
+    try {
+      await GoogleSignin.signOut();
+      dispatch(clearIdToken());
+    } catch (error) {
+      console.error('Error signing out: ', error);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -32,7 +45,7 @@ const ProfileScreen: React.FC = () => {
         </View>
         <View>
           <Text style={styles.name}>Hi, {userName}</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsVisible(true)}>
             <Text style={styles.editText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -40,15 +53,15 @@ const ProfileScreen: React.FC = () => {
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>12</Text>
+          <Text style={styles.statNumber}>0</Text>
           <Text style={styles.statLabel}>Goals Completed</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>INTJ</Text>
+          <Text style={styles.statNumber}>{personalityType}</Text>
           <Text style={styles.statLabel}>Personality</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>84%</Text>
+          <Text style={styles.statNumber}>{wellnessScore}%</Text>
           <Text style={styles.statLabel}>Wellness Score</Text>
         </View>
       </View>
@@ -56,13 +69,14 @@ const ProfileScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>AI Profile Summary</Text>
         <View style={styles.infoCard}>
-          <Text>Lifestyle: Active</Text>
-          <Text>Goal Focus: Career</Text>
-          <Text>Personality: INTJ</Text>
-          <Text>Trauma History: Provided</Text>
-          <Text>Preferences: Morning Routine</Text>
+          <Text>Personality: {personalityType}</Text>
+          <Text>Trauma History: {trauma ? 'provided' : 'Not Provided'}</Text>
+          <Text>Preferences: {preferences ? 'provided' : 'Not Provided'}</Text>
         </View>
-        <TouchableOpacity style={styles.updateButton}>
+        <TouchableOpacity
+          style={styles.updateButton}
+          onPress={() => setIsVisible(true)}
+        >
           <Text style={styles.updateButtonText}>Update Preferences</Text>
         </TouchableOpacity>
       </View>
@@ -79,6 +93,17 @@ const ProfileScreen: React.FC = () => {
           <Text>Logout</Text>
         </TouchableOpacity>
       </View>
+      <LoadingModal
+        visible={isPersonalityLoading}
+        loadingText={'Retrieving Data...'}
+      />
+      <LaunchModal
+        visible={isVisible}
+        LaunchText="This feature is in testing and will be available soon..."
+        onClose={() => {
+          setIsVisible(false);
+        }}
+      />
     </ScrollView>
   );
 };

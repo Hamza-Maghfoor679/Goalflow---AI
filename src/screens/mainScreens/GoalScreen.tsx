@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,11 +12,29 @@ import { useSelector } from 'react-redux';
 import { useGenerateTasksQuery } from '../../api/HomeApi';
 import { RootState } from '../../redux/store/store';
 import LoadingModal from '../../components/ui/LoadingModal';
+import { useGetUserQuery } from '../../api/userApi';
 
 const GoalsScreen: React.FC = () => {
   const [tasks, setTasks] = useState(initialTasks);
   const { Uid } = useSelector((state: RootState) => state.auth);
-  const { data, error, isLoading } = useGenerateTasksQuery(Uid!);
+  const { data, isLoading } = useGenerateTasksQuery(Uid!);
+  const { data: userData } = useGetUserQuery(Uid!);
+  console.log('data: ', data.tasks);
+  const rawCategory =
+    userData?.firestoreData?.onboardingPayload?.category || 'general';
+  const category = rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
+  useEffect(() => {
+    if (data?.tasks) {
+      const mappedTasks =
+        data?.tasks?.map((task: { title: string }, index: number) => ({
+          id: index.toString(),
+          title: task.title,
+          completed: false,
+        })) ?? [];
+      setTasks(mappedTasks);
+    }
+  }, [data?.tasks]);
+
   const { tipOfTheDay } = data || {};
 
   const toggleTask = (id: string) => {
@@ -31,14 +49,15 @@ const GoalsScreen: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>🎯 Your Smart Goal Plan</Text>
       <View style={styles.goalCard}>
-        <Text style={styles.goalTitle}>Main Goal: Get Fit by Oct 2025</Text>
+        <Text style={styles.goalTitle}>Main Goal: {category}</Text>
         <Text style={styles.goalDescription}>
-          Based on your inputs: Low-activity lifestyle + INTJ personality
+          Based on your inputs: You will be guided and the tasks will be
+          generated!
         </Text>
         <View style={styles.progressBar}>
           <View style={styles.progress} />
         </View>
-        <Text style={styles.progressText}>Week 2 of 12</Text>
+        <Text style={styles.progressText}>Week 0 of 12</Text>
       </View>
 
       <Text style={styles.sectionTitle}>📅 Today's Tasks</Text>

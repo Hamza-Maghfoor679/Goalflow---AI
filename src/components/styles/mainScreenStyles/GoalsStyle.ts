@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progress: {
-    width: '18%', // Example: Week 2 of 12 = 16%
+    width: '0%', // Example: Week 2 of 12 = 16%
     height: '100%',
     backgroundColor: '#0077cc',
   },

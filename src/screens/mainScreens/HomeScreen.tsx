@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/HomeStyle';
-import { goals, tasks } from '../../constants/utils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
 import { useGenerateTasksQuery } from '../../api/HomeApi';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LoadingModal from '../../components/ui/LoadingModal';
 import LaunchModal from '../../components/ui/LaunchModal';
+import { useGetUserQuery } from '../../api/userApi';
 
 const HomeScreen = () => {
   const { userData, Uid } = useSelector((state: RootState) => state.auth);
@@ -27,16 +27,17 @@ const HomeScreen = () => {
   const { data, error, isLoading } = useGenerateTasksQuery(Uid!);
   const { data: personalityData, isLoading: isPersonalityLoading } =
     useGeneratePersonalityQuery(Uid!);
-    
+  const { data: usersData } = useGetUserQuery(Uid!);
+  const rawCategory =
+    usersData?.firestoreData?.onboardingPayload?.category || 'general';
+  const category = rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
+
   const aiInsight = personalityData?.aiInsight || 'No AI insight available.';
 
   const todaysFocus =
     data?.todaysFocus ||
     'Avoid distractions and focus on your top priority tasks today.';
-  console.log('Generated Tasks:', data?.todaysFocus);
-  if (error) {
-    console.log('RTK Query error:', error);
-  }
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -81,25 +82,14 @@ const HomeScreen = () => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🏆 Your Top Goals</Text>
-          <FlatList
-            data={goals}
-            keyExtractor={item => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={styles.goalCard}>
-                <Text style={styles.goalTitle}>{item.title}</Text>
-                <View style={styles.progressBarBackground}>
-                  <View
-                    style={[styles.progressBar, { width: `${item.progress}%` }]}
-                  />
-                </View>
-                <Text style={styles.progressPercent}>
-                  {item.progress}% complete
-                </Text>
-              </View>
-            )}
-          />
+
+          <View style={styles.goalCard}>
+            <Text style={styles.goalTitle}>{category}</Text>
+            <View style={styles.progressBarBackground}>
+              <View style={[styles.progressBar, { width: `${0}%` }]} />
+            </View>
+            <Text style={styles.progressPercent}>0% complete</Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -120,9 +110,13 @@ const HomeScreen = () => {
             : 'Retrieving Data...'
         }
       />
-      <LaunchModal visible={isVisible} LaunchText='This feature is in beta mode and will be available soon...' onClose={()=>{
-        setIsVisible(false);
-      }} />
+      <LaunchModal
+        visible={isVisible}
+        LaunchText="This feature is in beta mode and will be available soon..."
+        onClose={() => {
+          setIsVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 };

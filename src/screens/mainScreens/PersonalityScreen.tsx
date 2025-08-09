@@ -12,6 +12,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LoadingModal from '../../components/ui/LoadingModal';
+import LaunchModal from '../../components/ui/LaunchModal';
 
 interface PersonalityData {
   type: string;
@@ -22,35 +23,26 @@ interface PersonalityData {
   notablePeople?: string[];
 }
 
-const personality: PersonalityData = {
-  type: 'INTJ',
-  title: 'The Architect',
-  traits: ['Introverted', 'Strategic', 'Future-Focused'],
-  description:
-    'You are analytical and independent, often striving for innovation and mastery. You prefer planning over spontaneity and need time alone to recharge.',
-  impact:
-    'Your goal plans are designed for long-term structure, minimal distractions, and deep work. Expect weekly tracking and milestone-based achievements.',
-  notablePeople: [
-    'Elon Musk',
-    'Mark Zuckerberg',
-    'Isaac Newton',
-    'Nikola Tesla',
-    'Albert Einstein',
-    'Hrithik Roshan',
-    'Ronaldo',
-  ],
-};
-
 type FamousPerson = {
   name: string;
 };
 
 const PersonalityScreen: React.FC = () => {
+  const [isVisible, setIsVisible] = React.useState(false);
   const { Uid } = useSelector((state: RootState) => state.auth);
 
   const { data: personalityData, isLoading: isPersonalityLoading } =
     useGeneratePersonalityQuery(Uid!);
-  const { impactOnGoals, description, personalityType } = personalityData || {};
+  const {
+    impactOnGoals,
+    description,
+    personalityType,
+    personalityName,
+    personalityTraits: traitsString = '',
+  } = personalityData || {};
+  console.log(personalityData);
+
+  const personalityTraits = traitsString.split(',').map((t: any) => t.trim()); // ✅ convert to array
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -62,11 +54,11 @@ const PersonalityScreen: React.FC = () => {
             <Text style={styles.personalityType}>
               {isPersonalityLoading ? <ActivityIndicator /> : personalityType}
             </Text>
-            <Text style={styles.personalityTitle}>{personality.title}</Text>
+            <Text style={styles.personalityTitle}>{personalityName}</Text>
           </View>
 
           <View style={styles.traitsContainer}>
-            {personality.traits.map((trait, index) => (
+            {personalityTraits.map((trait: string, index: number) => (
               <View key={index} style={styles.traitPill}>
                 <Text style={styles.traitText}>{trait}</Text>
               </View>
@@ -110,7 +102,10 @@ const PersonalityScreen: React.FC = () => {
         </ScrollView>
 
         <View style={styles.bottomButtonContainer}>
-          <Button title="Retake Personality Test" />
+          <Button
+            title="Retake Personality Test"
+            onPress={() => setIsVisible(true)}
+          />
         </View>
       </View>
       <LoadingModal
@@ -120,6 +115,13 @@ const PersonalityScreen: React.FC = () => {
             ? 'Analyzing Personality...'
             : 'Retrieving Data...'
         }
+      />
+      <LaunchModal
+        visible={isVisible}
+        LaunchText="This feature is in testing and will be available soon..."
+        onClose={() => {
+          setIsVisible(false);
+        }}
       />
     </SafeAreaView>
   );
