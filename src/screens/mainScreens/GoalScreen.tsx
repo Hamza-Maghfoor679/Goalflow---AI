@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initialTasks } from '../../constants/utils';
 import { styles } from '../../components/styles/mainScreenStyles/GoalsStyle';
 import { useSelector } from 'react-redux';
@@ -13,29 +14,75 @@ import { useGenerateTasksQuery } from '../../api/HomeApi';
 import { RootState } from '../../redux/store/store';
 import LoadingModal from '../../components/ui/LoadingModal';
 import { useGetUserQuery } from '../../api/userApi';
+import { useGetTasksQuery } from '../../api/tasks';
+
+const TIP_CACHE_KEY = 'tipOfTheDayCache';
 
 const GoalsScreen: React.FC = () => {
   const [tasks, setTasks] = useState(initialTasks);
+  const [cachedTip, setCachedTip] = useState<string | null>(null);
+  const [shouldFetchTip, setShouldFetchTip] = useState(true);
+
   const { Uid } = useSelector((state: RootState) => state.auth);
-  const { data, isLoading } = useGenerateTasksQuery(Uid!);
+  const { data, isLoading } = useGenerateTasksQuery(Uid!, {
+    skip: !shouldFetchTip,
+  });
+  const goalIds = useSelector((state: RootState) => state.goals.goalIds);
+  const initialId = goalIds[0];
+  // Get tasks for the initial Id
+  const { data: tasksData } = useGetTasksQuery(initialId);
+
   const { data: userData } = useGetUserQuery(Uid!);
-  console.log('data: ', data.tasks);
   const rawCategory =
     userData?.firestoreData?.onboardingPayload?.category || 'general';
   const category = rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1);
+
   useEffect(() => {
-    if (data?.tasks) {
-      const mappedTasks =
-        data?.tasks?.map((task: { title: string }, index: number) => ({
-          id: index.toString(),
-          title: task.title,
-          completed: false,
-        })) ?? [];
+    if (tasksData?.todaysTasks) {
+      const mappedTasks = tasksData.todaysTasks.map((task: any) => ({
+        ...task,
+        completed: false,
+      }));
       setTasks(mappedTasks);
     }
-  }, [data?.tasks]);
+  }, [tasksData]);
 
-  const { tipOfTheDay } = data || {};
+  // Check AsyncStorage cache for tip on mount
+  useEffect(() => {
+    const loadTipFromCache = async () => {
+      try {
+        const cached = await AsyncStorage.getItem(TIP_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          const age = Date.now() - parsed.timestamp;
+          if (age < 86400000) {
+            setCachedTip(parsed.tipOfTheDay);
+            setShouldFetchTip(false); // Use cached tip, skip API
+            return;
+          }
+        }
+        setShouldFetchTip(true); // No valid cache, fetch new tip
+      } catch (e) {
+        console.error('Failed to load cached tip', e);
+        setShouldFetchTip(true);
+      }
+    };
+    loadTipFromCache();
+  }, []);
+
+  // Cache new tip when API data changes
+  useEffect(() => {
+    if (data?.tipOfTheDay && shouldFetchTip) {
+      AsyncStorage.setItem(
+        TIP_CACHE_KEY,
+        JSON.stringify({
+          tipOfTheDay: data.tipOfTheDay,
+          timestamp: Date.now(),
+        }),
+      );
+      setCachedTip(data.tipOfTheDay);
+    }
+  }, [data, shouldFetchTip]);
 
   const toggleTask = (id: string) => {
     setTasks(prev =>
@@ -61,13 +108,14 @@ const GoalsScreen: React.FC = () => {
       </View>
 
       <Text style={styles.sectionTitle}>📅 Today's Tasks</Text>
+
       <FlatList
         data={tasks}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.taskCard, item.completed && styles.completedTask]}
-            onPress={() => toggleTask(item.id)}
+            onPress={() => toggleTask(item.id.toString())}
           >
             <Text style={styles.taskText}>
               {item.completed ? '✅' : '⬜'} {item.title}
@@ -78,13 +126,19 @@ const GoalsScreen: React.FC = () => {
 
       <Text style={styles.tipTitle}>💡 AI Tip of the Day</Text>
       <Text style={styles.tipText}>
-        {isLoading ? 'Loading tip...' : tipOfTheDay || 'No tip available.'}
+        {isLoading && !cachedTip
+          ? 'Loading tip...'
+          : cachedTip || 'No tip available.'}
       </Text>
+
       <LoadingModal
-        visible={isLoading}
-        loadingText={isLoading ? 'Analyzing Data...' : 'Retrieving Data...'}
+        visible={isLoading && !cachedTip}
+        loadingText={
+          isLoading ? 'Analyzing Data...' : 'Retrieving Data...'
+        }
       />
     </View>
   );
 };
+
 export default GoalsScreen;

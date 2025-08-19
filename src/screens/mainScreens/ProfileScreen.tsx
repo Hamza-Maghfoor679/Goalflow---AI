@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/ProfileStyle';
@@ -11,18 +11,60 @@ import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LoadingModal from '../../components/ui/LoadingModal';
 import LaunchModal from '../../components/ui/LaunchModal';
 import { useGetUserQuery } from '../../api/userApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen: React.FC = () => {
   const navigation = useTypedNavigation();
   const dispatch = useDispatch();
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const { Uid } = useSelector((state: RootState) => state.auth);
 
+  // Cache states
+  const [cachedPersonality, setCachedPersonality] = useState<any>(null);
+  const [shouldCallApi, setShouldCallApi] = useState(true);
+
+  // Check cache on mount
+  useEffect(() => {
+    const checkCachedPersonality = async () => {
+      const cached = await AsyncStorage.getItem('personalityCache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const age = Date.now() - parsed.timestamp;
+        if (age < 86400000) { // 24 hours
+          setCachedPersonality(parsed.personality);
+          setShouldCallApi(false);
+        }
+      }
+    };
+    checkCachedPersonality();
+  }, []);
+
+  // Fetch personality data conditionally
   const { data: personalityData, isLoading: isPersonalityLoading } =
-    useGeneratePersonalityQuery(Uid!);
-  const { personalityType, wellnessScore } = personalityData || {};
+    useGeneratePersonalityQuery(Uid!, {
+      skip: !shouldCallApi,
+    });
+
+  // Cache new API data
+  useEffect(() => {
+    if (personalityData && shouldCallApi) {
+      AsyncStorage.setItem(
+        'personalityCache',
+        JSON.stringify({
+          personality: personalityData,
+          timestamp: Date.now(),
+        }),
+      );
+      setCachedPersonality(personalityData);
+    }
+  }, [personalityData]);
+
+  // Use cached or fetched data
+  const personality = cachedPersonality || personalityData || {};
+  const { personalityType, wellnessScore } = personality;
+
+  // User data from API and redux
   const { data: user } = useGetUserQuery(Uid!);
-  console.log('userData', user?.firestoreData?.onboardingPayload);
   const userData = useSelector((state: RootState) => state.auth.userData);
   const userName = userData?.user?.givenName;
   const usersData = user?.firestoreData?.onboardingPayload || {};
@@ -57,11 +99,24 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.statLabel}>Goals Completed</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{personalityType}</Text>
+          <Text style={styles.statNumber}>
+            {isPersonalityLoading && !cachedPersonality ? (
+              '...'
+            ) : (
+              personalityType
+            )}
+          </Text>
           <Text style={styles.statLabel}>Personality</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{wellnessScore}%</Text>
+          <Text style={styles.statNumber}>
+            {isPersonalityLoading && !cachedPersonality ? (
+              '...'
+            ) : (
+              wellnessScore ?? '--'
+            )}
+            {wellnessScore != null ? '%' : ''}
+          </Text>
           <Text style={styles.statLabel}>Wellness Score</Text>
         </View>
       </View>
@@ -93,8 +148,9 @@ const ProfileScreen: React.FC = () => {
           <Text>Logout</Text>
         </TouchableOpacity>
       </View>
+
       <LoadingModal
-        visible={isPersonalityLoading}
+        visible={isPersonalityLoading && !cachedPersonality}
         loadingText={'Retrieving Data...'}
       />
       <LaunchModal

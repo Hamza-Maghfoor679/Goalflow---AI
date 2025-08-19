@@ -5,8 +5,11 @@ export const userApi = api.injectEndpoints({
     getUser: build.query<any, string>({
       query: (userId) => `users/user/${userId}`,
     }),
+    userDetails: build.query<any, void>({
+      query: () => `users/me`
+    })
   }),
   overrideExisting: true,
 });
 
-export const { useGetUserQuery } = userApi;
+export const { useGetUserQuery, useUserDetailsQuery } = userApi;

@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import tokenReducer from '../slices/tokenSlice';
+import goalsReducer from '../slices/goalsSlice';
 import { api } from '../../api/api'; // This is your RTK Query base API
 
 import {
@@ -25,6 +26,7 @@ const persistedAuthReducer = persistReducer(persistConfig, tokenReducer);
 export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
+    goals: goalsReducer,
     [api.reducerPath]: api.reducer, 
   },
   middleware: (getDefaultMiddleware) =>

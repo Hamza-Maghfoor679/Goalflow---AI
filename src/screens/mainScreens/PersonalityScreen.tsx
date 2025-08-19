@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,38 +11,74 @@ import { styles } from '../../components/styles/mainScreenStyles/PersonalityStyl
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
-import LoadingModal from '../../components/ui/LoadingModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LaunchModal from '../../components/ui/LaunchModal';
 
-interface PersonalityData {
-  type: string;
-  title: string;
-  traits: string[];
-  description: string;
-  impact: string;
-  notablePeople?: string[];
+interface FamousPerson {
+  name: string;
 }
 
-type FamousPerson = {
-  name: string;
-};
-
 const PersonalityScreen: React.FC = () => {
-  const [isVisible, setIsVisible] = React.useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const { Uid } = useSelector((state: RootState) => state.auth);
 
+  // Local state for caching
+  const [cachedPersonality, setCachedPersonality] = useState<any>(null);
+  const [shouldCallApi, setShouldCallApi] = useState(true);
+
+  // Check cache on mount
+  useEffect(() => {
+    const checkCachedPersonality = async () => {
+      const cached = await AsyncStorage.getItem('personalityCache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const age = Date.now() - parsed.timestamp;
+        if (age < 86400000) {
+          setCachedPersonality(parsed.personality);
+          setShouldCallApi(false); // Skip API call if cache is valid
+        }
+      }
+    };
+    checkCachedPersonality();
+  }, []);
+
+  // Fetch personality data only if shouldCallApi is true
   const { data: personalityData, isLoading: isPersonalityLoading } =
-    useGeneratePersonalityQuery(Uid!);
+    useGeneratePersonalityQuery(Uid!, {
+      skip: !shouldCallApi,
+    });
+
+  // Save to cache when new data arrives
+  useEffect(() => {
+    if (personalityData && shouldCallApi) {
+      AsyncStorage.setItem(
+        'personalityCache',
+        JSON.stringify({
+          personality: personalityData,
+          timestamp: Date.now(),
+        }),
+      );
+      setCachedPersonality(personalityData);
+    }
+  }, [personalityData]);
+
+  // Use cached data if available, else API data or empty object
+  const personality = cachedPersonality || personalityData || {};
+
   const {
     impactOnGoals,
     description,
     personalityType,
     personalityName,
     personalityTraits: traitsString = '',
-  } = personalityData || {};
-  console.log(personalityData);
+    famousPeople = [],
+  } = personality;
 
-  const personalityTraits = traitsString.split(',').map((t: any) => t.trim()); // ✅ convert to array
+  // Convert traits string to array if needed
+  const traitsStringSafe = typeof traitsString === 'string' ? traitsString : '';
+  const personalityTraits = traitsStringSafe
+    ? traitsStringSafe.split(',').map((t: string) => t.trim())
+    : [];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -52,17 +88,25 @@ const PersonalityScreen: React.FC = () => {
 
           <View style={styles.card}>
             <Text style={styles.personalityType}>
-              {isPersonalityLoading ? <ActivityIndicator /> : personalityType}
+              {isPersonalityLoading && !cachedPersonality ? (
+                <ActivityIndicator />
+              ) : (
+                personalityType
+              )}
             </Text>
             <Text style={styles.personalityTitle}>{personalityName}</Text>
           </View>
 
           <View style={styles.traitsContainer}>
-            {personalityTraits.map((trait: string, index: number) => (
-              <View key={index} style={styles.traitPill}>
-                <Text style={styles.traitText}>{trait}</Text>
-              </View>
-            ))}
+            {isPersonalityLoading && !cachedPersonality ? (
+              <ActivityIndicator />
+            ) : (
+              personalityTraits?.map((trait: string, index: number) => (
+                <View key={index} style={styles.traitPill}>
+                  <Text style={styles.traitText}>{trait}</Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
 
@@ -73,30 +117,34 @@ const PersonalityScreen: React.FC = () => {
         >
           <Text style={styles.sectionTitle}>🧠 About You</Text>
           <Text style={styles.paragraph}>
-            {isPersonalityLoading ? <ActivityIndicator /> : description}
+            {isPersonalityLoading && !cachedPersonality ? (
+              <ActivityIndicator />
+            ) : (
+              description
+            )}
           </Text>
 
           <Text style={styles.sectionTitle}>
             🧩 How This Impacts Your Goals
           </Text>
           <Text style={styles.paragraph}>
-            {isPersonalityLoading ? <ActivityIndicator /> : impactOnGoals}
-          </Text>
-
-          <>
-            <Text style={styles.sectionTitle}>🔍 Famous People Like You</Text>
-            {isPersonalityLoading ? (
+            {isPersonalityLoading && !cachedPersonality ? (
               <ActivityIndicator />
             ) : (
-              personalityData?.famousPeople?.map(
-                (person: FamousPerson, index: number) => (
-                  <Text key={index} style={styles.listItem}>
-                    • {person.name}
-                  </Text>
-                ),
-              )
+              impactOnGoals
             )}
-          </>
+          </Text>
+
+          <Text style={styles.sectionTitle}>🔍 Famous People Like You</Text>
+          {isPersonalityLoading && !cachedPersonality ? (
+            <ActivityIndicator />
+          ) : (
+            famousPeople.map((person: FamousPerson, index: number) => (
+              <Text key={index} style={styles.listItem}>
+                • {person.name}
+              </Text>
+            ))
+          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -108,20 +156,11 @@ const PersonalityScreen: React.FC = () => {
           />
         </View>
       </View>
-      <LoadingModal
-        visible={isPersonalityLoading}
-        loadingText={
-          isPersonalityLoading
-            ? 'Analyzing Personality...'
-            : 'Retrieving Data...'
-        }
-      />
+
       <LaunchModal
         visible={isVisible}
         LaunchText="This feature is in testing and will be available soon..."
-        onClose={() => {
-          setIsVisible(false);
-        }}
+        onClose={() => setIsVisible(false)}
       />
     </SafeAreaView>
   );
