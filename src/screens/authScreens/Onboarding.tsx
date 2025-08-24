@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import { Dimensions, Pressable, Text, View } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import Toast from 'react-native-toast-message';
-import {
-  GoalCategory,
-  habitQuestionsByCategory,
-} from '../../constants/Questions';
 import { useTypedNavigation } from '../../hooks/useTypedNavigation';
 import { onboardingStyles } from '../../components/styles/styles';
 import UserInfoModal from '../../components/ui/UserInfoModal';
@@ -16,14 +12,15 @@ import { RootStackParamList } from '../../types';
 import { OnboardingProp } from '../../types/types';
 
 const { width } = Dimensions.get('window');
+type QuestionType = { question: string; options: string[] };
 
 const Onboarding = () => {
   const navigation = useTypedNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'Onboarding'>>();
-  const { category, input, age, timeFrame } = route.params || {};
+  const { category, input, age, timeFrame, questions } = route.params || {};
 
-  const normalizedCategory = category?.toLowerCase() as GoalCategory;
-  const selectedQuestions = habitQuestionsByCategory[normalizedCategory] || [];
+  const selectedQuestions: QuestionType[] =
+    (questions as unknown as QuestionType[]) || [];
 
   const [answers, setAnswers] = useState<(string | null)[]>(
     Array(selectedQuestions.length).fill(null),
@@ -80,23 +77,27 @@ const Onboarding = () => {
     personality: string;
     trauma: string;
     preferences: string;
-  }) => {
-    const structuredAnswers = selectedQuestions.map((q, index) => ({
-    question: q.question,
-    answer: answers[index] || '',
-  }));
+  }): void => {
+    const structuredAnswers = selectedQuestions.map(
+      (q: any, index: number) => ({
+        question: q.question,
+        answer: answers[index] || '',
+      }),
+    );
+
     const onboardingPayload: OnboardingProp = {
-      personality: personality,
-      trauma: trauma,
-      answers: structuredAnswers, 
-      preferences: preferences, 
-      category: category, 
-      input: input,
-      age: age,
-      timeFrame: timeFrame,
-    }
+      personality,
+      trauma,
+      preferences,
+      category,
+      input,
+      age,
+      timeFrame,
+      answers: structuredAnswers,
+    };
+
     setModalVisible(false);
-    navigation.navigate('Login', {onboardingPayload});
+    navigation.navigate('Login', { onboardingPayload });
   };
 
   if (!category || selectedQuestions.length === 0) {
@@ -130,7 +131,7 @@ const Onboarding = () => {
           <Text style={onboardingStyles.question}>{current.question}</Text>
 
           <View style={onboardingStyles.optionsWrapper}>
-            {current.options.map(option => {
+            {current?.options.map(option => {
               const isSelected = answers[currentIndex] === option;
               return (
                 <Pressable
@@ -155,10 +156,9 @@ const Onboarding = () => {
           </View>
 
           <Button title={isLast ? 'Finish' : 'Next'} onPress={handleNext} />
-          {
-            currentIndex > 0 &&
-          <Button color='grey' title='Back' onPress={handleBack} />
-          }
+          {currentIndex > 0 && (
+            <Button color="grey" title="Back" onPress={handleBack} />
+          )}
         </View>
       </Animatable.View>
 

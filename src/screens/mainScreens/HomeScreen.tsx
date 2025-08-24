@@ -11,7 +11,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from '../../components/styles/mainScreenStyles/HomeStyle';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
-import { useGenerateTasksQuery } from '../../api/HomeApi';
+import { useGenerateTaskswithAiQuery } from '../../api/HomeApi';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LoadingModal from '../../components/ui/LoadingModal';
 import LaunchModal from '../../components/ui/LaunchModal';
@@ -20,65 +20,69 @@ import { useGetGoalsQuery } from '../../api/goals';
 import { Goal } from '../../types/types';
 import { setGoal } from '../../redux/slices/goalsSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAiTaskGeneratorQuery } from '../../api/ai';
+import { getProgressColor } from '../../utils/progress';
+import { useGetProgressQuery } from '../../api/tasks';
+
+const phaseId = 1;
 
 const HomeScreen = () => {
-  const { userData, Uid } = useSelector((state: RootState) => state.auth);
+  const { userData, Uid, idToken } = useSelector(
+    (state: RootState) => state.auth,
+  );
+  console.log(idToken);
+
   const [isVisible, setIsVisible] = useState(false);
   const [cachedInsight, setCachedInsight] = useState<string | null>(null);
   const [shouldCallApi, setShouldCallApi] = useState(true);
+
   const dispatch = useDispatch();
-  const { data: userDetails } = useUserDetailsQuery();
-  const initialGoalId = userDetails?.firestoreData?.goals?.[0];
-  const shouldSkip = !initialGoalId || initialGoalId.length === 0;
+  const { data: userDetails, isLoading: isUserLoading } = useUserDetailsQuery();
 
-  console.log(initialGoalId);
-
-  const { data: aiGeneratedTasksData, isLoading: aiTaskGeneratingLoading } =
-    useAiTaskGeneratorQuery(initialGoalId, {
-      skip: !initialGoalId, // Skip until initialGoalId is defined
-    });
-  console.log('aiGeneratedTasksData', aiGeneratedTasksData);
+  const initialGoalId = userDetails?.firestoreData?.goals?.[0] ?? null;
   const userName = userData?.user?.givenName;
 
-  const { data, isLoading } = useGenerateTasksQuery(Uid!);
+    const {
+      data: goalProgressData,
+      isLoading: isProgressLoading,
+      refetch: progressRefetch,
+    } = useGetProgressQuery({ goalId: initialGoalId });
+  
+    const progressPercent = goalProgressData?.progressPercent ?? 0;
+
+  const {
+    data,
+    isLoading: aiGeneratingTasksLoading,
+    error,
+  } = useGenerateTaskswithAiQuery({ goalId: initialGoalId, phase: 6 });
+
+  useEffect(() => {
+    console.log('initialGoalId:', initialGoalId);
+    console.log('isUserLoading:', isUserLoading);
+  }, [initialGoalId, isUserLoading]);
+
   const { data: goalsData } = useGetGoalsQuery() as { data?: Goal[] };
 
   useEffect(() => {
     if (goalsData) {
       dispatch(setGoal(goalsData));
     }
+    console.log('goalsData', goalsData);
   }, [goalsData, dispatch]);
 
   const { data: personalityData, isLoading: isPersonalityLoading } =
-    useGeneratePersonalityQuery(Uid!, {
-      skip: !shouldCallApi,
-    });
+    useGeneratePersonalityQuery(Uid!);
 
   const aiInsight = personalityData?.aiInsight || 'No AI insight available.';
 
   const todaysFocus =
     data?.todaysFocus ||
     'Avoid distractions and focus on your top priority tasks today.';
-  useEffect(() => {
-    const checkCachedInsight = async () => {
-      const cached = await AsyncStorage.getItem('aiInsightCache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        const age = Date.now() - parsed.timestamp;
-        if (age < 86400000) {
-          setCachedInsight(parsed.aiInsight);
-          setShouldCallApi(false); // ❌ Skip API call
-        }
-      }
-    };
-    checkCachedInsight();
-  }, []);
 
   useEffect(() => {
-    if (personalityData?.aiInsight && shouldCallApi) {
+    if (personalityData?.aiInsight && shouldCallApi && Uid) {
+      const cacheKey = `aiInsightCache_${Uid}`;
       AsyncStorage.setItem(
-        'aiInsightCache',
+        cacheKey,
         JSON.stringify({
           aiInsight: personalityData.aiInsight,
           timestamp: Date.now(),
@@ -86,7 +90,7 @@ const HomeScreen = () => {
       );
       setCachedInsight(personalityData.aiInsight);
     }
-  }, [personalityData]);
+  }, [personalityData, shouldCallApi, Uid]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,7 +109,7 @@ const HomeScreen = () => {
           <Text style={styles.sectionTitle}>🎯 Today's Focus</Text>
           <View style={[styles.taskCard, styles.taskCardPending]}>
             <Text style={[styles.taskText]}>
-              {isLoading ? <ActivityIndicator /> : todaysFocus}
+              {aiGeneratingTasksLoading ? <ActivityIndicator /> : todaysFocus}
             </Text>
           </View>
         </View>
@@ -147,11 +151,28 @@ const HomeScreen = () => {
                 style={[styles.goalCard, { marginRight: 16 }]}
               >
                 <Text style={styles.goalTitle}>
-                  {goal.category ?? 'No category'}
+                  {goal.category
+                    ? goal.category.charAt(0).toUpperCase() +
+                      goal.category.slice(1)
+                    : 'No category'}
                 </Text>
-
+                <Text style={styles.goalDesc}>
+                  {goal.category
+                    ? goal.title.charAt(0).toUpperCase() +
+                      goal.title.slice(1, 24) +
+                      '...'
+                    : 'No Title'}
+                </Text>
                 <View style={styles.progressBarBackground}>
-                  <View style={[styles.progressBar, { width: `0%` }]} />
+                  <View
+                    style={[
+                      styles.progress,
+                      {
+                        width: `${progressPercent}%`,
+                        backgroundColor: getProgressColor(progressPercent),
+                      },
+                    ]}
+                  />
                 </View>
 
                 <Text style={styles.progressPercent}>0% complete</Text>
@@ -169,14 +190,12 @@ const HomeScreen = () => {
         <Text style={styles.floatingButtonText}>Plan My Day with AI</Text>
       </TouchableOpacity>
       <LoadingModal
-        visible={isPersonalityLoading || isLoading || aiTaskGeneratingLoading}
+        visible={isPersonalityLoading || aiGeneratingTasksLoading}
         loadingText={
           isPersonalityLoading
             ? 'Analyzing Personality...'
-            : isLoading
-            ? 'Generating Task...'
-            : aiTaskGeneratingLoading
-            ? 'AI Generating Tasks...'
+            : aiGeneratingTasksLoading
+            ? `AI Generating Tasks for Phase...`
             : 'Retrieving Data...'
         }
       />

@@ -17,7 +17,7 @@ import { styles } from '../styles/ModalStyles';
 
 interface UserInfoModalProps {
   isVisible: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onSubmit: (data: { data: string }) => void;
   placeholder?: string;
   title?: string;
@@ -25,6 +25,8 @@ interface UserInfoModalProps {
   disabled?: boolean;
   value?: string;
   setValue?: (value: string) => void;
+  loadingText?: string
+  buttonText?: string
 }
 
 const CustomModal: React.FC<UserInfoModalProps> = ({
@@ -36,13 +38,15 @@ const CustomModal: React.FC<UserInfoModalProps> = ({
   children,
   disabled = false,
   value,
-  setValue
+  setValue,
+  loadingText,
+  buttonText = 'Submit & Continue'
 }) => {
 
 const handleSubmit = () => {
   if (value?.trim()) {
     onSubmit({ data: value.trim() });
-    onClose();
+    // onClose();
   }
 };
   return (
@@ -82,7 +86,7 @@ const handleSubmit = () => {
 
                 <View style={styles.buttonWrapper}>
                   <Button
-                    title="Submit & Continue"
+                    title={disabled ? loadingText : buttonText}
                     onPress={handleSubmit}
                     disabled={disabled}
                   />

@@ -93,12 +93,22 @@ greetingsSection: {
     fontSize: 16,
     fontWeight: '500',
   },
+  goalDesc: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#747474ff'
+  },
   progressBarBackground: {
     height: 8,
     backgroundColor: '#eee',
     borderRadius: 6,
     marginTop: 12,
     marginBottom: 4,
+  },
+   progress: {
+    width: '0%',
+    height: '100%',
+    backgroundColor: '#0077cc',
   },
   progressBar: {
     height: 8,

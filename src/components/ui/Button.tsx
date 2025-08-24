@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Inter',
+    textAlign: 'center'
   },
   textDisabled: {
     color: '#000',

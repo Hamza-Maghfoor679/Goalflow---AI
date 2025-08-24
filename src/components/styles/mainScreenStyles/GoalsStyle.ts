@@ -1,18 +1,22 @@
-import { StyleSheet } from "react-native";
-import { colors } from "../../../assets/colors/colors";
+import { StyleSheet } from 'react-native';
+import { colors } from '../../../assets/colors/colors';
 
-export 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 20, paddingTop: 50 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 20, color: colors.primary },
+export const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff', padding: 15, paddingTop: 50 },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: colors.primary,
+  },
   goalCard: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: '#3c5865ff',
     padding: 12,
     borderRadius: 12,
     marginBottom: 20,
   },
-  goalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  goalDescription: { fontSize: 14, color: '#555' },
+  goalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8, color: '#fff' },
+  goalDescription: { fontSize: 14, color: '#fff' },
   progressBar: {
     height: 8,
     backgroundColor: '#ccc',
@@ -28,13 +32,13 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 12,
     marginTop: 6,
-    color: '#666',
+    color: '#fff',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     marginVertical: 16,
-    color: colors.primary
+    color: colors.primary,
   },
   taskCard: {
     backgroundColor: '#f0f0f0',
@@ -53,13 +57,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 10,
     textAlign: 'center',
-    color: colors.primary
+    color: colors.primary,
   },
   tipText: {
     fontSize: 12,
     color: '#444',
     textAlign: 'center',
-    marginTop: 4
+    marginTop: 4,
+  },
+  addGoalText: {
+    fontWeight: '500',
+  },
+  todayTasksContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10
   },
 });
-

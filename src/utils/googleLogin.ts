@@ -4,6 +4,7 @@ import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 
 import {
+  setFirebaseToken,
   setIdToken,
   setLoginSuccess,
   setUid,
@@ -60,8 +61,7 @@ export async function signInWithGoogleAndSaveOnboarding(
     // ✅ 4. Get Firebase ID Token to use for backend authentication
     const firebaseIdToken: string | null =
       (await auth().currentUser?.getIdToken(true)) ?? null;
-    console.log('firebaseIdToken', firebaseIdToken);
-
+      dispatch(setFirebaseToken(firebaseIdToken))
     // ✅ Redux updates (send Firebase token to backend)
     dispatch?.(setIdToken(firebaseIdToken));
     dispatch?.(setLoginSuccess(true));

@@ -2,11 +2,11 @@ import { api } from './api';
 
 export const homeApi = api.injectEndpoints({
   endpoints: (build) => ({
-    generateTasks: build.query<any, string>({
-      query: (userId) => `ai/generate/tasks/${userId}`,
+    generateTaskswithAi: build.query<any, any>({
+      query: ({goalId, phase}) => `tasks/generate/goal/${goalId}?phase=${phase}`,
     }),
   }),
   overrideExisting: true,
 });
 
-export const { useGenerateTasksQuery } = homeApi;
+export const { useGenerateTaskswithAiQuery } = homeApi;

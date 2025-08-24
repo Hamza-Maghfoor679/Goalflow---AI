@@ -28,3 +28,8 @@ export type Goal = {
   updatedAt?: { _seconds: number; _nanoseconds: number };
   description?: string;
 };
+
+export type Question = {
+  question: string;
+  options: string[];
+};

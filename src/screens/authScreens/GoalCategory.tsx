@@ -11,6 +11,7 @@ import {
   styles,
 } from '../../components/styles/goalCategoryStyles';
 import CustomModal from '../../components/ui/Modal';
+import { useAiQuestionsGeneratorMutation } from '../../api/ai';
 
 const GoalCategory = () => {
   const navigation = useTypedNavigation();
@@ -19,6 +20,15 @@ const GoalCategory = () => {
   const [age, setAge] = useState<string>('');
   const [goalCategory, setGoalCategory] = useState<string>('');
   const [timeFrame, setTimeFrame] = useState<string>('');
+  const [
+    generateQuestions,
+    { data: questionsData, isLoading: isQuestionsLoading },
+  ] = useAiQuestionsGeneratorMutation();
+
+  if (questionsData) {
+    console.log('Questions Genrated', questionsData)
+    console.log(isQuestionsLoading)
+  }
 
   const isDisabled =
     GoalDefinition.trim() === '' ||
@@ -68,16 +78,40 @@ const GoalCategory = () => {
     saveSelectedCategoryInBackground(lower);
   };
 
-  const handleSubmit = (data: { data: string }) => {
-    setIsVisible(false);
-    setGoalDefinition(data.data);
-    navigation.navigate('Onboarding', {
+const handleSubmit = async (data: { data: string }) => {
+  // setIsVisible(false);
+  setGoalDefinition(data.data);
+
+  try {
+    const result = await generateQuestions({
+      title: data.data,
       category: goalCategory,
-      input: data.data,
-      age: age,
-      timeFrame: 'I want to achieve this goal in/by ' + timeFrame,
-    });
-  };
+      timeframe: timeFrame
+    }).unwrap();
+
+    console.log('Generated Questions:', result.questions);
+    if (result.questions) {
+      handleOnClose()
+
+      navigation.navigate('Onboarding', {
+        category: goalCategory,
+        input: data.data,
+        age: age,
+        timeFrame: 'I want to achieve this goal in/by ' + timeFrame,
+        questions: result.questions, // Pass to next screen
+      });
+    }
+
+  } catch (err) {
+    console.error('Failed to generate questions:', err);
+    // Optionally show an error toast or retry
+  }
+};
+
+const handleOnClose = () => {
+ setIsVisible(false)
+}
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,14 +135,15 @@ const GoalCategory = () => {
         </View>
       </ScrollView>
       <CustomModal
-        disabled={isDisabled}
+        disabled={isDisabled || isQuestionsLoading}
         value={GoalDefinition}
         title={`In one sentence, what do you want to achieve specifically in ${goalCategory}`}
         isVisible={isVisible}
-        onClose={() => setIsVisible(false)}
+        onClose={handleOnClose}
         onSubmit={handleSubmit}
         setValue={setGoalDefinition}
         placeholder="Write Specific Goal Here"
+        loadingText='Please Wait We are Analyzing the goal...'
       >
         <TextInput
           placeholder={'Enter your Age'}

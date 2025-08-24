@@ -5,8 +5,26 @@ export const aiApi = api.injectEndpoints({
     aiTaskGenerator: build.query<any, string>({
       query: goalId => `/tasks/generate/goal/${goalId}`,
     }),
+    aiQuestionsGenerator: build.mutation<any, { title: string; category: string; timeframe: string }>({
+      query: ({ title, category, timeframe }) => ({
+        url: '/ai/questions',
+        method: 'POST',
+        body: {
+          goal: {
+            title,
+            category,
+            timeframe
+          }
+        }
+      })
+    })
   }),
   overrideExisting: true,
 });
 
-export const { useLazyAiTaskGeneratorQuery, useAiTaskGeneratorQuery} = aiApi;
+export const {
+  useLazyAiTaskGeneratorQuery,
+  useAiTaskGeneratorQuery,
+  useAiQuestionsGeneratorMutation
+} = aiApi;
+

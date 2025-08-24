@@ -21,13 +21,15 @@ export interface AuthState {
   userData: UserDataState | null;
   loginSuccess: boolean;
   Uid: string | null ;
+  firebaseIdToken: string | null ;
 }
 
 const initialState: AuthState = {
   idToken: null,
   userData: null,
   loginSuccess: false,
-  Uid: null
+  Uid: null,
+  firebaseIdToken: null
 };
 
 const tokenSlice = createSlice({
@@ -51,6 +53,9 @@ const tokenSlice = createSlice({
     },
     setUid: (state, action) => {
       state.Uid = action.payload;
+    },
+    setFirebaseToken: (state, action) => {
+      state.firebaseIdToken = action.payload
     }
   },
 });
@@ -61,7 +66,8 @@ export const {
   setUserData, 
   setLoginSuccess, 
   clearLoginSuccess,
-  setUid
+  setUid,
+  setFirebaseToken
 } = tokenSlice.actions;
 
 export default tokenSlice.reducer;
