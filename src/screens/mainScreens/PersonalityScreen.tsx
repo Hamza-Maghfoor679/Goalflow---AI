@@ -5,6 +5,7 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import Button from '../../components/ui/Button';
 import { styles } from '../../components/styles/mainScreenStyles/PersonalityStyle';
@@ -12,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LaunchModal from '../../components/ui/LaunchModal';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface FamousPerson {
   name: string;
@@ -21,22 +23,28 @@ const PersonalityScreen: React.FC = () => {
   const [isVisible, setIsVisible] = React.useState(false);
   const { Uid } = useSelector((state: RootState) => state.auth);
 
-  const { data: personalityData, isLoading } = useGeneratePersonalityQuery(Uid!, {
-    skip: !Uid,
-  });
+  const { data: personalityData, isLoading } = useGeneratePersonalityQuery(
+    Uid!,
+    {
+      skip: !Uid,
+    },
+  );
+  console.log('personalityyyyyy', personalityData?.data);
 
   const {
     impactOnGoals,
     description,
     personalityType,
     personalityName,
-    personalityTraits: traitsString = '',
+    personalityTraits = [],
     famousPeople = [],
-  } = personalityData || {};
+  } = personalityData?.data || {};
 
   const traitsArray =
-    typeof traitsString === 'string'
-      ? traitsString.split(',').map(trait => trait.trim())
+    typeof personalityTraits === 'string'
+      ? personalityTraits.split(',').map(trait => trait.trim())
+      : Array.isArray(personalityTraits)
+      ? personalityTraits
       : [];
 
   return (
@@ -75,7 +83,9 @@ const PersonalityScreen: React.FC = () => {
             {isLoading ? <ActivityIndicator /> : description}
           </Text>
 
-          <Text style={styles.sectionTitle}>🧩 How This Impacts Your Goals</Text>
+          <Text style={styles.sectionTitle}>
+            🧩 How This Impacts Your Goals
+          </Text>
           <Text style={styles.paragraph}>
             {isLoading ? <ActivityIndicator /> : impactOnGoals}
           </Text>
@@ -94,19 +104,22 @@ const PersonalityScreen: React.FC = () => {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        <View style={styles.bottomButtonContainer}>
-          <Button
-            title="Retake Personality Test"
-            onPress={() => setIsVisible(true)}
-          />
-        </View>
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setIsVisible(true)}
+        >
+          <Ionicons name="sparkles-outline" size={24} color="white" />
+          <Text style={styles.floatingButtonText}>Full Personality Test</Text>
+        </TouchableOpacity>
       </View>
 
       <LaunchModal
         visible={isVisible}
         LaunchText="This feature is in testing and will be available soon..."
         onClose={() => setIsVisible(false)}
-      />
+      >
+
+      </LaunchModal>
     </SafeAreaView>
   );
 };

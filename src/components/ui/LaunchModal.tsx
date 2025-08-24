@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   Modal,
   View,
@@ -14,9 +14,15 @@ interface LaunchModalProps {
   visible: boolean;
   LaunchText: string;
   onClose: () => void;
+  children?: ReactNode 
 }
 
-const LaunchModal: React.FC<LaunchModalProps> = ({ visible, LaunchText, onClose }) => {
+const LaunchModal: React.FC<LaunchModalProps> = ({
+  visible,
+  LaunchText,
+  onClose,
+  children
+}) => {
   return (
     <Modal
       transparent
@@ -25,11 +31,16 @@ const LaunchModal: React.FC<LaunchModalProps> = ({ visible, LaunchText, onClose 
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" translucent />
+      <StatusBar
+        backgroundColor="rgba(0,0,0,0.5)"
+        barStyle="light-content"
+        translucent
+      />
 
       <View style={styles.overlay}>
         <View style={styles.modal}>
           <Text style={styles.text}>{LaunchText}</Text>
+          {children}
 
           <Pressable onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>Close</Text>
@@ -49,7 +60,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    padding: 10
+    padding: 10,
   },
   modal: {
     backgroundColor: '#333',

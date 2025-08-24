@@ -15,53 +15,32 @@ import { useGenerateTaskswithAiQuery } from '../../api/HomeApi';
 import { useGeneratePersonalityQuery } from '../../api/personalityApi';
 import LoadingModal from '../../components/ui/LoadingModal';
 import LaunchModal from '../../components/ui/LaunchModal';
-import { useGetUserQuery, useUserDetailsQuery } from '../../api/userApi';
+import { useUserDetailsQuery } from '../../api/userApi';
 import { useGetGoalsQuery } from '../../api/goals';
 import { Goal } from '../../types/types';
 import { setGoal } from '../../redux/slices/goalsSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProgressColor } from '../../utils/progress';
 import { useGetProgressQuery } from '../../api/tasks';
-
-const phaseId = 1;
 
 const HomeScreen = () => {
   const { userData, Uid, idToken } = useSelector(
     (state: RootState) => state.auth,
   );
   console.log(idToken);
-
   const [isVisible, setIsVisible] = useState(false);
-  const [cachedInsight, setCachedInsight] = useState<string | null>(null);
-  const [shouldCallApi, setShouldCallApi] = useState(true);
-
   const dispatch = useDispatch();
-  const { data: userDetails, isLoading: isUserLoading } = useUserDetailsQuery();
-
+  const { data: userDetails } = useUserDetailsQuery();
   const initialGoalId = userDetails?.firestoreData?.goals?.[0] ?? null;
   const userName = userData?.user?.givenName;
-
-    const {
-      data: goalProgressData,
-      isLoading: isProgressLoading,
-      refetch: progressRefetch,
-    } = useGetProgressQuery({ goalId: initialGoalId });
-  
-    const progressPercent = goalProgressData?.progressPercent ?? 0;
-
+  const {
+    data: goalProgressData,
+  } = useGetProgressQuery({ goalId: initialGoalId });
+  const progressPercent = goalProgressData?.progressPercent ?? 0;
   const {
     data,
     isLoading: aiGeneratingTasksLoading,
-    error,
   } = useGenerateTaskswithAiQuery({ goalId: initialGoalId, phase: 6 });
-
-  useEffect(() => {
-    console.log('initialGoalId:', initialGoalId);
-    console.log('isUserLoading:', isUserLoading);
-  }, [initialGoalId, isUserLoading]);
-
   const { data: goalsData } = useGetGoalsQuery() as { data?: Goal[] };
-
   useEffect(() => {
     if (goalsData) {
       dispatch(setGoal(goalsData));
@@ -71,26 +50,11 @@ const HomeScreen = () => {
 
   const { data: personalityData, isLoading: isPersonalityLoading } =
     useGeneratePersonalityQuery(Uid!);
-
-  const aiInsight = personalityData?.aiInsight || 'No AI insight available.';
+  const aiInsight = personalityData?.data?.aiInsight || 'No AI insight available.';
 
   const todaysFocus =
     data?.todaysFocus ||
     'Avoid distractions and focus on your top priority tasks today.';
-
-  useEffect(() => {
-    if (personalityData?.aiInsight && shouldCallApi && Uid) {
-      const cacheKey = `aiInsightCache_${Uid}`;
-      AsyncStorage.setItem(
-        cacheKey,
-        JSON.stringify({
-          aiInsight: personalityData.aiInsight,
-          timestamp: Date.now(),
-        }),
-      );
-      setCachedInsight(personalityData.aiInsight);
-    }
-  }, [personalityData, shouldCallApi, Uid]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -128,10 +92,10 @@ const HomeScreen = () => {
           <Text style={styles.sectionTitle}>🧠 AI Insight</Text>
           <View style={styles.insightCard}>
             <Text style={styles.insightText}>
-              {isPersonalityLoading && !cachedInsight ? (
+              {isPersonalityLoading ? (
                 <ActivityIndicator />
               ) : (
-                cachedInsight ?? aiInsight
+                aiInsight
               )}
             </Text>
           </View>
@@ -146,7 +110,7 @@ const HomeScreen = () => {
             style={{ paddingVertical: 10 }}
           >
             {goalsData?.map(goal => (
-              <View
+              <TouchableOpacity
                 key={goal.id}
                 style={[styles.goalCard, { marginRight: 16 }]}
               >
@@ -176,7 +140,7 @@ const HomeScreen = () => {
                 </View>
 
                 <Text style={styles.progressPercent}>0% complete</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
