@@ -34,6 +34,10 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     color: '#fff',
   },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',

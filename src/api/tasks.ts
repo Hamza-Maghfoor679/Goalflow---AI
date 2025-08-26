@@ -33,5 +33,5 @@ export const tasksApi = api.injectEndpoints({
   overrideExisting: true,
 });
 
-export const { useGetTasksQuery, useGetProgressQuery, useUpdateTaskMutation } =
+export const { useGetTasksQuery, useGetProgressQuery, useUpdateTaskMutation, useLazyGetTasksQuery } =
   tasksApi;

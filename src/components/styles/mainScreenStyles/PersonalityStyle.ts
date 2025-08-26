@@ -101,11 +101,10 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Content Styles
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 12,
     color: colors.primary,
   },

@@ -10,6 +10,7 @@ import {
   setUid,
   setUserData,
 } from '../redux/slices/tokenSlice';
+import { api } from '../api/api';
 
 export async function signInWithGoogleAndSaveOnboarding(
   onboardingPayload: any,
@@ -67,6 +68,7 @@ export async function signInWithGoogleAndSaveOnboarding(
     dispatch?.(setLoginSuccess(true));
     dispatch?.(setUserData(userInfo.data));
     dispatch?.(setUid(uid));
+    dispatch(api.util.resetApiState());
 
     const userRef = firestore().collection('users').doc(finalUser.uid);
 

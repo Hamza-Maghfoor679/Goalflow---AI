@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import Button from '../../components/ui/Button';
 import { styles } from '../../components/styles/mainScreenStyles/PersonalityStyle';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
@@ -38,7 +37,8 @@ const PersonalityScreen: React.FC = () => {
     personalityName,
     personalityTraits = [],
     famousPeople = [],
-  } = personalityData?.data || {};
+    wellnessScore
+  } = personalityData || {};
 
   const traitsArray =
     typeof personalityTraits === 'string'
@@ -58,6 +58,7 @@ const PersonalityScreen: React.FC = () => {
               {isLoading ? <ActivityIndicator /> : personalityType}
             </Text>
             <Text style={styles.personalityTitle}>{personalityName}</Text>
+            <Text style={styles.personalityTitle}>Wellness Score {wellnessScore}%</Text>
           </View>
 
           <View style={styles.traitsContainer}>
@@ -109,7 +110,7 @@ const PersonalityScreen: React.FC = () => {
           onPress={() => setIsVisible(true)}
         >
           <Ionicons name="sparkles-outline" size={24} color="white" />
-          <Text style={styles.floatingButtonText}>Full Personality Test</Text>
+          <Text style={styles.floatingButtonText}>Generate Full Personality</Text>
         </TouchableOpacity>
       </View>
 

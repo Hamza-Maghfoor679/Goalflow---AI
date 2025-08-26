@@ -56,7 +56,8 @@ const tokenSlice = createSlice({
     },
     setFirebaseToken: (state, action) => {
       state.firebaseIdToken = action.payload
-    }
+    },
+    resetAuthState: () => initialState
   },
 });
 
@@ -67,7 +68,8 @@ export const {
   setLoginSuccess, 
   clearLoginSuccess,
   setUid,
-  setFirebaseToken
+  setFirebaseToken,
+  resetAuthState
 } = tokenSlice.actions;
 
 export default tokenSlice.reducer;

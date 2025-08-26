@@ -7,24 +7,59 @@ import {
   StatusBar,
   Platform,
 } from 'react-native';
-import { Text } from 'react-native-animatable';
+import * as Animatable from 'react-native-animatable';
+import Ionicons from 'react-native-vector-icons/Ionicons'; // 👈 AI-style icon
 
-const LoadingModal = ({ visible, loadingText }: { visible: boolean, loadingText: string }) => {
+interface LoadingModalProps {
+  visible: boolean;
+  loadingText: string;
+}
+
+const LoadingModal: React.FC<LoadingModalProps> = ({ visible, loadingText }) => {
   return (
     <Modal
       transparent
       visible={visible}
       animationType="fade"
-      statusBarTranslucent // ✅ THIS LINE is the fix
+      statusBarTranslucent
     >
-      {/* Optional: Hide the status bar if needed */}
-      <StatusBar backgroundColor="rgba(0,0,0,0.5)" barStyle="light-content" translucent />
+      <StatusBar
+        backgroundColor="rgba(0,0,0,0.4)"
+        barStyle="light-content"
+        translucent
+      />
 
       <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={{ color: '#fff', marginTop: 10 }}>{loadingText}</Text>
-        </View>
+        <Animatable.View
+          animation="fadeInUp"
+          duration={700}
+          style={styles.modal}
+          useNativeDriver
+        >
+          {/* 👇 AI Icon with bounce animation */}
+          <Animatable.View
+            animation="bounceIn"
+            iterationCount="infinite"
+            duration={2000}
+            style={styles.iconContainer}
+            useNativeDriver
+          >
+            <Ionicons name="sparkles" size={20} color="#fff" />
+          </Animatable.View>
+
+          {/* Spinner */}
+          {/* <ActivityIndicator size="large" color="#007AFF" style={styles.spinner} /> */}
+
+          {/* Loading Text */}
+          <Animatable.Text
+            animation="pulse"
+            iterationCount="infinite"
+            duration={1500}
+            style={styles.text}
+          >
+            {loadingText}
+          </Animatable.Text>
+        </Animatable.View>
       </View>
     </Modal>
   );
@@ -38,12 +73,41 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   modal: {
-    backgroundColor: '#333',
-    padding: 30,
-    borderRadius: 12,
+    backgroundColor: '#1c1c1e',
+    paddingVertical: 30,
+    paddingHorizontal: 40,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  iconContainer: {
+    backgroundColor: '#007AFF',
+    padding: 18,
+    borderRadius: 50,
+    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  spinner: {
+    marginBottom: 16,
+  },
+  text: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
