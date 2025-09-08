@@ -12,6 +12,7 @@ import {
 } from '../../components/styles/goalCategoryStyles';
 import CustomModal from '../../components/ui/Modal';
 import { useAiQuestionsGeneratorMutation } from '../../api/ai';
+import LoadingModal from '../../components/ui/LoadingModal';
 
 const GoalCategory = () => {
   const navigation = useTypedNavigation();
@@ -22,13 +23,8 @@ const GoalCategory = () => {
   const [timeFrame, setTimeFrame] = useState<string>('');
   const [
     generateQuestions,
-    { data: questionsData, isLoading: isQuestionsLoading },
+    { isLoading: isQuestionsLoading },
   ] = useAiQuestionsGeneratorMutation();
-
-  if (questionsData) {
-    console.log('Questions Genrated', questionsData)
-    console.log(isQuestionsLoading)
-  }
 
   const isDisabled =
     GoalDefinition.trim() === '' ||
@@ -78,40 +74,38 @@ const GoalCategory = () => {
     saveSelectedCategoryInBackground(lower);
   };
 
-const handleSubmit = async (data: { data: string }) => {
-  // setIsVisible(false);
-  setGoalDefinition(data.data);
+  const handleSubmit = async (data: { data: string }) => {
+    // setIsVisible(false);
+    setGoalDefinition(data.data);
 
-  try {
-    const result = await generateQuestions({
-      title: data.data,
-      category: goalCategory,
-      timeframe: timeFrame
-    }).unwrap();
-
-    console.log('Generated Questions:', result.questions);
-    if (result.questions) {
-      handleOnClose()
-
-      navigation.navigate('Onboarding', {
+    try {
+      const result = await generateQuestions({
+        title: data.data,
         category: goalCategory,
-        input: data.data,
-        age: age,
-        timeFrame: 'I want to achieve this goal in/by ' + timeFrame,
-        questions: result.questions, // Pass to next screen
-      });
+        timeframe: timeFrame,
+      }).unwrap();
+
+      console.log('Generated Questions:', result.questions);
+      if (result.questions) {
+        handleOnClose();
+
+        navigation.navigate('Onboarding', {
+          category: goalCategory,
+          input: data.data,
+          age: age,
+          timeFrame: 'I want to achieve this goal in/by ' + timeFrame,
+          questions: result.questions, // Pass to next screen
+        });
+      }
+    } catch (err) {
+      console.error('Failed to generate questions:', err);
+      // Optionally show an error toast or retry
     }
+  };
 
-  } catch (err) {
-    console.error('Failed to generate questions:', err);
-    // Optionally show an error toast or retry
-  }
-};
-
-const handleOnClose = () => {
- setIsVisible(false)
-}
-
+  const handleOnClose = () => {
+    setIsVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -143,7 +137,6 @@ const handleOnClose = () => {
         onSubmit={handleSubmit}
         setValue={setGoalDefinition}
         placeholder="Write Specific Goal Here"
-        loadingText='Please Wait We are Analyzing the goal...'
       >
         <TextInput
           placeholder={'Enter your Age'}
@@ -169,6 +162,11 @@ const handleOnClose = () => {
           textAlignVertical="top"
         />
       </CustomModal>
+      <LoadingModal
+        loadingText="Please wait"
+        text2='we are analyzing your goal...'
+        visible={isQuestionsLoading}
+      />
     </SafeAreaView>
   );
 };

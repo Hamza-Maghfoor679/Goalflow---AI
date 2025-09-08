@@ -1,266 +1,161 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-} from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text } from 'react-native';
 import { styles } from '../../components/styles/mainScreenStyles/GoalsStyle';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store/store';
-import {
-  useGetProgressQuery,
-  useGetTasksQuery,
-  useUpdateTaskMutation,
-} from '../../api/tasks';
+import { useGetProgressQuery, useGetTasksQuery, useUpdateTaskMutation } from '../../api/tasks';
 import Toast from 'react-native-toast-message';
 import LaunchModal from '../../components/ui/LaunchModal';
-import { useGenerateTaskswithAiQuery } from '../../api/HomeApi';
 import LoadingModal from '../../components/ui/LoadingModal';
 import GoalCard from '../../components/ui/goalScreenComponents/GoalCard';
 import PhaseControls from '../../components/ui/goalScreenComponents/PhaseControls';
 import TasksList from '../../components/ui/goalScreenComponents/TasksList';
-
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-}
-
-interface PhaseItem {
-  label: string;
-  value: number;
-}
+import { useUserDetailsQuery } from '../../api/userApi';
+import { useLazyGenerateTaskswithAiQuery } from '../../api/ai';
 
 const GoalsScreen: React.FC = () => {
-  // Memoize selector to prevent unnecessary re-renders
-  const initialId = useSelector((state: RootState) => state.goals.goalIds[0]);
-  
+  const { Uid } = useSelector((state: RootState) => state.auth);
+
+  // --- RTK Query Hooks ---
+  const { data: userDetails, isLoading: isUserDetailsLoading } = useUserDetailsQuery(undefined, { skip: !Uid });
+  const initialId = userDetails?.firestoreData?.goals?.[0] || '';
+
   const [phase, setPhase] = useState<number>(1);
   const [day, setDay] = useState<number>(1);
-  const [errorVisible, setErrorVisible] = useState<boolean>(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [generatePhase, setGeneratePhase] = useState<number>(0);
   const [phaseOpen, setPhaseOpen] = useState(false);
   const [dayOpen, setDayOpen] = useState(false);
-
-  // Memoize phase items initialization
-  const initialPhaseItems = useMemo(
-    () => Array.from({ length: 4 }, (_, i) => ({
-      label: `Phase ${i + 1}`,
-      value: i + 1,
-    })),
-    []
-  );
-  
-  const [phaseItems, setPhaseItems] = useState<PhaseItem[]>(initialPhaseItems);
+  const [isFeatureModalVisible, setIsFeatureModalVisible] = useState<boolean>(false);
+  // Add state to control error modal visibility
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
 
   const {
     data: tasksData,
     isLoading: isTasksLoading,
+    isFetching: isTasksFetching,
     refetch: tasksRefetch,
-  } = useGetTasksQuery({
-    goalId: initialId,
-    phase,
-    dayIndex: day - 1,
-  });
-
-  const [updateTask] = useUpdateTaskMutation();
-  
-  const {
-    data: aiData,
-    isLoading: aiGeneratingTasksLoading,
-    error,
-    isSuccess
-  } = useGenerateTaskswithAiQuery(
-    { goalId: initialId, phase: generatePhase },
-    { skip: generatePhase === 0 },
+  } = useGetTasksQuery(
+    { goalId: initialId, phase, dayIndex: day - 1 },
+    { skip: !initialId || isUserDetailsLoading }
   );
 
-  useEffect(()=>{
-    tasksRefetch()
-  },[isSuccess])
-  const { data: goalProgressData, refetch: progressRefetch } =
-    useGetProgressQuery({ goalId: initialId });
+  const { data: goalProgressData, refetch: progressRefetch } = useGetProgressQuery(
+    { goalId: initialId },
+    { skip: !initialId || isUserDetailsLoading }
+  );
 
-  // Memoize derived data to prevent recalculation on every render
-  const derivedData = useMemo(() => {
-    const category = tasksData?.category
-      ? tasksData.category.charAt(0).toUpperCase() + tasksData.category.slice(1)
-      : 'General';
+  const [triggerGenerate, { isLoading: aiLoading, isError: isAiError, isSuccess: isAiSuccess, error: aiError }] =
+    useLazyGenerateTaskswithAiQuery();
+  const [updateTask] = useUpdateTaskMutation();
 
-    const { tipOfThePhase, totalPhases, availablePhases, startDate, endDate } =
-      tasksData ?? {};
-    
-    const safeAvailablePhases = availablePhases ?? [];
-    const { progressPercent, totalTasks, completedTasks } = goalProgressData ?? {};
+  // --- Derived State and Memoization ---
+
+  const availablePhases = tasksData?.availablePhases ?? [];
+  const category = tasksData?.category ? tasksData.category.charAt(0).toUpperCase() + tasksData.category.slice(1) : 'General';
+
+  const phaseItems = useMemo(() => {
+    if (!availablePhases.length) return [];
+    const items = availablePhases.map((num: number) => ({
+      label: `Phase ${num}`,
+      value: num,
+    }));
+
+    if (!aiLoading) {
+      const nextPhase = Math.max(...availablePhases) + 1;
+      items.push({ label: `➕ Add Phase ${nextPhase}`, value: nextPhase });
+    }
+    return items;
+  }, [availablePhases, aiLoading]);
+
+ const tasks = useMemo(() => {
+  return tasksData?.tasks?.map((t: any) => {
+    const cleanTitle = t.title.replace(/^✅|^⬜/, '').trim();
+    const icon = t.completed ? '✅' : '⬜';
 
     return {
-      category,
-      tipOfThePhase,
-      totalPhases,
-      availablePhases,
-      safeAvailablePhases,
-      startDate,
-      endDate,
-      progressPercent,
-      totalTasks,
-      completedTasks,
+      ...t,
+      title: `${icon} ${cleanTitle}`,
+      completed: t.completed ?? false,
     };
-  }, [tasksData, goalProgressData]);
+  }) || [];
+}, [tasksData?.tasks]);
+    console.log('Mapped Tasks:', tasks);
 
-  // Update phase items when available phases change
+
+  // --- Effects and Callbacks ---
+
   useEffect(() => {
-    const { availablePhases, safeAvailablePhases } = derivedData;
-    
-    if (availablePhases && Array.isArray(availablePhases)) {
-      const items = availablePhases.map((phaseNum: number) => ({
-        label: `Phase ${phaseNum}`,
-        value: phaseNum,
-      }));
-
-      const maxPhase = Math.max(...safeAvailablePhases);
-      const nextPhase = maxPhase + 1;
-
-      items.push({
-        label: `➕ Add Phase ${nextPhase}`,
-        value: nextPhase,
-      });
-
-      setPhaseItems(items);
-
-      if (!availablePhases.includes(phase)) {
-        setPhase(availablePhases[0]);
-      }
+    if (initialId && availablePhases.length === 0 && !aiLoading && !isTasksFetching) {
+      triggerGenerate({ goalId: initialId, phase: 1 });
     }
-  }, [derivedData.availablePhases, derivedData.safeAvailablePhases, phase]);
+  }, [initialId, availablePhases, aiLoading, isTasksFetching, triggerGenerate]);
 
-  // Map tasks from API data with dependency array
   useEffect(() => {
-    if (tasksData?.tasks) {
-      const mappedTasks: Task[] = tasksData.tasks.map((task: any) => ({
-        ...task,
-        title: task.title.replace(/^✅|^⬜/, '').trim(),
-        completed: task.completed ?? false,
-      }));
-      setTasks(mappedTasks);
-    }
-  }, [tasksData?.tasks]);
-
-  // Handle successful AI phase generation
-  useEffect(() => {
-    if (aiData && generatePhase > 0) {
-      console.log('AI phase generation successful, refetching tasks...');
-
-      setPhase(generatePhase);
-      setDay(1);
+    if (isAiSuccess) {
       tasksRefetch();
       progressRefetch();
-      setGeneratePhase(0);
-
       Toast.show({
         type: 'success',
-        text1: '🎉 New phase generated successfully!',
-        text2: `Phase ${generatePhase} is ready with new tasks`,
+        text1: '🎉 Phase generated successfully!',
       });
     }
-  }, [aiData, generatePhase, tasksRefetch, progressRefetch]);
+  }, [isAiSuccess, tasksRefetch, progressRefetch]);
 
-  // Reset day when phase changes
+  // Show error modal when AI error occurs
+  useEffect(() => {
+    if (isAiError) {
+      setShowErrorModal(true);
+    }
+  }, [isAiError]);
+
   useEffect(() => {
     setDay(1);
   }, [phase]);
 
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      setErrorVisible(true);
-      tasksRefetch();
-    }
-    console.log('error', error);
-  }, [error, tasksRefetch]);
-
-  // Memoize event handlers to prevent child component re-renders
   const updateTaskById = useCallback(async (id: string) => {
     try {
-      await updateTask({
-        goalId: initialId,
-        phaseNo: phase,
-        taskId: id,
-      }).unwrap();
-
-      setTasks((prev: Task[]) =>
-        prev?.map((task: Task) =>
-          task.id === id ? { ...task, completed: !task.completed } : task,
-        ),
-      );
-
-      Toast.show({
-        type: 'success',
-        text1: '✅ You have completed a task! 🔥',
-      });
-
+      await updateTask({ goalId: initialId, phaseNo: phase, taskId: id }).unwrap();
+      Toast.show({ type: 'success', text1: '✅ Task updated!' });
       progressRefetch();
-      tasksRefetch();
+      tasksRefetch()
     } catch (err) {
-      console.error('❌ Failed to update task', err);
+      Toast.show({ type: 'error', text1: '❌ Failed to update task' });
     }
-  }, [updateTask, initialId, phase, progressRefetch, tasksRefetch]);
+  }, [updateTask, initialId, phase, progressRefetch]);
 
-  const handlePhaseChange = useCallback((callbackOrValue: ((phase: number) => number) | number) => {
-    const selectedValue =
-      typeof callbackOrValue === 'function'
-        ? callbackOrValue(phase)
-        : callbackOrValue;
+  const handlePhaseChange = useCallback((callbackOrValue: any) => {
+    if (aiLoading) return;
 
-    const maxPhase = Math.max(...derivedData.safeAvailablePhases);
-    const nextPhase = maxPhase + 1;
+    const selected = typeof callbackOrValue === 'function' ? callbackOrValue(phase) : callbackOrValue;
+    const nextPhase = Math.max(...availablePhases, 1) + 1;
 
-    if (selectedValue === nextPhase) {
-      setGeneratePhase(nextPhase);
-      return;
+    if (selected === nextPhase) {
+      triggerGenerate({ goalId: initialId, phase: nextPhase });
+    } else if (availablePhases.includes(selected)) {
+      setPhase(selected);
     }
+  }, [phase, availablePhases, initialId, triggerGenerate, aiLoading]);
 
-    setPhase(selectedValue);
-  }, [phase, derivedData.safeAvailablePhases]);
-
-  const handleCloseErrorModal = useCallback(() => {
-    setErrorVisible(false);
-    setGeneratePhase(0);
+  // Handle error modal close
+  const handleErrorModalClose = useCallback(() => {
+    setShowErrorModal(false);
   }, []);
 
-  const handleAddGoal = useCallback(() => {
-    setIsVisible(true);
-  }, []);
+  const isLoading = isUserDetailsLoading || isTasksLoading || isTasksFetching;
 
-  const handleModalClose = useCallback(() => {
-    setIsVisible(false);
-  }, []);
-
-  const errorMessage = () => {
-    if (!error) return '';
-    
-    if ('data' in error && error.data) {
-      const errorData = error.data as any;
-      return errorData?.error ;
-    }
-    
-    const errorObj = error as any;
-    return errorObj?.message || 'An error occurred';
-  };
-
+  // --- Rendered Component ---
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🎯 Your Smart Goal Plan</Text>
 
       <GoalCard
-        category={derivedData.category}
-        totalPhases={derivedData.totalPhases}
+        category={category}
+        totalPhases={tasksData?.totalPhases}
         phase={phase}
-        progressPercent={derivedData.progressPercent}
-        completedTasks={derivedData.completedTasks}
-        totalTasks={derivedData.totalTasks}
-        startDate={derivedData.startDate}
-        endDate={derivedData.endDate}
+        progressPercent={goalProgressData?.progressPercent}
+        completedTasks={goalProgressData?.completedTasks}
+        totalTasks={goalProgressData?.totalTasks}
+        startDate={tasksData?.startDate}
+        endDate={tasksData?.endDate}
       />
 
       <PhaseControls
@@ -268,37 +163,41 @@ const GoalsScreen: React.FC = () => {
         day={day}
         phaseItems={phaseItems}
         phaseOpen={phaseOpen}
+        setPhaseItems={phaseItems}
         dayOpen={dayOpen}
         setPhaseOpen={setPhaseOpen}
         setDayOpen={setDayOpen}
-        setPhaseItems={setPhaseItems}
         setDay={setDay}
         onPhaseChange={handlePhaseChange}
-        onAddGoal={handleAddGoal}
+        onAddGoal={() => setIsFeatureModalVisible(true)}
+        aiLoading={aiLoading}
       />
 
       <TasksList
-        isLoading={isTasksLoading}
+        isLoading={isLoading}
         tasks={tasks}
         onTaskUpdate={updateTaskById}
-        tipOfThePhase={derivedData.tipOfThePhase}
+        tipOfThePhase={tasksData?.tipOfThePhase}
       />
 
+      {/* Modals */}
       <LaunchModal
-        visible={isVisible}
-        onClose={handleModalClose}
+        visible={isFeatureModalVisible}
+        onClose={() => setIsFeatureModalVisible(false)}
         LaunchText="This Feature will be added soon. Stay Tuned..."
       />
-      
       <LoadingModal
-        visible={aiGeneratingTasksLoading}
-        loadingText={`Generating tasks for Phase ${generatePhase}... \n     This may take a while`}
+        visible={aiLoading}
+        loadingText="Generating AI tasks..."
+        text2="This might take a while..."
       />
-      
       <LaunchModal
-        visible={errorVisible}
-        onClose={handleCloseErrorModal}
-        LaunchText={errorMessage()}
+        visible={showErrorModal}
+        onClose={handleErrorModalClose}
+        LaunchText={
+          (aiError && typeof aiError === 'object' && 'data' in aiError && (aiError as any).data?.error)
+            || 'An error occurred while generating tasks.'
+        }
       />
     </View>
   );

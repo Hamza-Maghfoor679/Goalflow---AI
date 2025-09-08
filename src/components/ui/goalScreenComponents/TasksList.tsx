@@ -37,20 +37,11 @@ const TaskItem: React.FC<{
 };
 
 const TasksList: React.FC<TasksListProps> = ({
-  isLoading,
   tasks,
   onTaskUpdate,
   tipOfThePhase,
 }) => {
-  if (isLoading) {
-    return (
-      <ActivityIndicator
-        size="large"
-        color="#0000ff"
-        style={{ marginVertical: 20 }}
-      />
-    );
-  }
+
 
   return (
     <>

@@ -28,7 +28,6 @@ const PersonalityScreen: React.FC = () => {
       skip: !Uid,
     },
   );
-  console.log('personalityyyyyy', personalityData?.data);
 
   const {
     impactOnGoals,
@@ -38,7 +37,7 @@ const PersonalityScreen: React.FC = () => {
     personalityTraits = [],
     famousPeople = [],
     wellnessScore
-  } = personalityData || {};
+  } = personalityData?.data || {};
 
   const traitsArray =
     typeof personalityTraits === 'string'

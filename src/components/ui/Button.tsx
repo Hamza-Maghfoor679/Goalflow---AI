@@ -15,7 +15,7 @@ interface ButtonProps {
 const DISABLED_COLOR = '#b4b4b4ff'; // Light grey for disabled state
 
 const Button: React.FC<ButtonProps> = ({
-  title = 'Press Me',
+  title = 'Submit & Continue',
   onPress,
   color = '#113F67',
   loading = false,

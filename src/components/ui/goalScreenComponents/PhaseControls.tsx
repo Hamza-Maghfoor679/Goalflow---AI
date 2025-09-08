@@ -18,6 +18,7 @@ interface PhaseControlsProps {
   setDay: React.Dispatch<React.SetStateAction<number>>;
   onPhaseChange: (value: any) => void;
   onAddGoal: () => void;
+  aiLoading?: boolean;
 }
 
 const PhaseControls: React.FC<PhaseControlsProps> = ({
@@ -32,11 +33,19 @@ const PhaseControls: React.FC<PhaseControlsProps> = ({
   setDay,
   onPhaseChange,
   onAddGoal,
+  aiLoading = false,
 }) => {
   const dayItems = Array.from({ length: 7 }, (_, i) => ({
     label: `Day ${i + 1}`,
     value: i + 1,
   }));
+
+  // Handle phase change - this function will be called by DropDownPicker
+  const handlePhaseChange = (callback: any) => {
+    if (aiLoading) return;
+    const newValue = typeof callback === 'function' ? callback(phase) : callback;
+    onPhaseChange(newValue);
+  };
 
   return (
     <>
@@ -46,15 +55,24 @@ const PhaseControls: React.FC<PhaseControlsProps> = ({
           value={phase}
           items={phaseItems}
           setOpen={setPhaseOpen}
-          setValue={onPhaseChange}
+          setValue={handlePhaseChange}
           setItems={setPhaseItems}
           containerStyle={{ flex: 1, height: 40 }}
-          style={{ height: 35 }}
+          style={{ 
+            height: 35,
+            opacity: aiLoading ? 0.6 : 1
+          }}
           dropDownContainerStyle={{ height: 'auto' }}
           textStyle={{ fontSize: 14 }}
           labelStyle={{ lineHeight: 18 }}
-          placeholder="Select Phase"
+          placeholder={aiLoading ? "Generating..." : "Select Phase"}
           zIndex={3000}
+          disabled={aiLoading}
+          onChangeValue={(value) => {
+            if (value !== null && !aiLoading) {
+              onPhaseChange(value);
+            }
+          }}
         />
 
         <DropDownPicker

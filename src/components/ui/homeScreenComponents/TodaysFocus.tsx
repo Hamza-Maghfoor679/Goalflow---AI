@@ -4,14 +4,14 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { styles } from '../../../components/styles/mainScreenStyles/HomeStyle';
 
 interface TodaysFocusProps {
-  todayFocus: string;
+  todayFocus: string | null | undefined;
   isLoading: boolean;
 }
 
 const TodaysFocus: React.FC<TodaysFocusProps> = ({ todayFocus, isLoading }) => {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>🎯 Today's Focus</Text>
+      <Text style={styles.sectionTitle}>🎯 Daily Reminder</Text>
       <View style={[styles.taskCard, styles.taskCardPending]}>
         <Text style={styles.taskText}>
           {isLoading ? (

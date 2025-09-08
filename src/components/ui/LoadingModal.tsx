@@ -13,9 +13,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons'; // 👈 AI-style icon
 interface LoadingModalProps {
   visible: boolean;
   loadingText: string;
+  text2?: string | boolean;
 }
 
-const LoadingModal: React.FC<LoadingModalProps> = ({ visible, loadingText }) => {
+const LoadingModal: React.FC<LoadingModalProps> = ({ visible, loadingText, text2 }) => {
   return (
     <Modal
       transparent
@@ -59,6 +60,14 @@ const LoadingModal: React.FC<LoadingModalProps> = ({ visible, loadingText }) => 
           >
             {loadingText}
           </Animatable.Text>
+           <Animatable.Text
+            animation="pulse"
+            iterationCount="infinite"
+            duration={1500}
+            style={styles.text2}
+          >
+            {text2}
+          </Animatable.Text>
         </Animatable.View>
       </View>
     </Modal>
@@ -74,6 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    padding: 10
   },
   modal: {
     backgroundColor: '#1c1c1e',
@@ -109,5 +119,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  text2: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: 10
   },
 });

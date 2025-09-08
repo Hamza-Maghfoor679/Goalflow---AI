@@ -14,7 +14,7 @@ const AIInsightSection: React.FC<AIInsightSectionProps> = ({
 }) => {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>🧠 AI Insight</Text>
+      <Text style={styles.sectionTitle}>🧠 AI Insight About You</Text>
       <View style={styles.insightCard}>
         <Text style={styles.insightText}>
           {isLoading ? (

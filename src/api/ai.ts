@@ -2,8 +2,9 @@ import { api } from './api';
 
 export const aiApi = api.injectEndpoints({
   endpoints: build => ({
-    aiTaskGenerator: build.query<any, string>({
-      query: goalId => `/tasks/generate/goal/${goalId}`,
+  generateTaskswithAi: build.query<any, any>({
+      query: ({ goalId, phase }) =>
+        `tasks/generate/goal/${goalId}?phase=${phase}`,
     }),
     aiQuestionsGenerator: build.mutation<any, { title: string; category: string; timeframe: string }>({
       query: ({ title, category, timeframe }) => ({
@@ -23,8 +24,8 @@ export const aiApi = api.injectEndpoints({
 });
 
 export const {
-  useLazyAiTaskGeneratorQuery,
-  useAiTaskGeneratorQuery,
+  useLazyGenerateTaskswithAiQuery,
+  useGenerateTaskswithAiQuery,
   useAiQuestionsGeneratorMutation
 } = aiApi;
 
